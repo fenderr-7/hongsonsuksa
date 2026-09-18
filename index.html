@@ -1,989 +1,235 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="สื่อการเรียนรู้วิทยาการคำนวณ เรื่องแนวคิดเชิงคำนวณ - Computational Thinking Interactive Quiz">
-    <title>แนวคิดเชิงคำนวณ - Coding Quiz Game</title>
-    <!-- Favicon -->
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💻</text></svg>">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Prompt for Thai text -->
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- MathJax for LaTeX Rendering -->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
-    <style>
-        html,
-        body {
-            overflow-x: hidden !important;
-            max-width: 100vw;
-        }
-
-        body {
-            font-family: 'Prompt', sans-serif;
-            background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
-            min-height: 100vh;
-        }
-
-        main {
-            overflow-x: hidden !important;
-            max-width: 100%;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #10b981;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #059669;
-        }
-
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .result-correct {
-            animation: celebrate 0.6s ease-in-out, bounceIn 0.5s ease-out;
-        }
-
-        .result-incorrect {
-            animation: shake 0.5s ease-in-out, bounceIn 0.3s ease-out;
-        }
-
-        @keyframes celebrate {
-
-            0%,
-            100% {
-                transform: scale(1) rotate(0deg);
-            }
-
-            25% {
-                transform: scale(1.08) rotate(-3deg);
-            }
-
-            75% {
-                transform: scale(1.08) rotate(3deg);
-            }
-        }
-
-        @keyframes shake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            10%,
-            30%,
-            50%,
-            70%,
-            90% {
-                transform: translateX(-5px);
-            }
-
-            20%,
-            40%,
-            60%,
-            80% {
-                transform: translateX(5px);
-            }
-        }
-
-        @keyframes bounceIn {
-            0% {
-                transform: scale(0.3);
-                opacity: 0;
-            }
-
-            50% {
-                transform: scale(1.05);
-            }
-
-            70% {
-                transform: scale(0.9);
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .result-icon {
-            animation: bounceIn 0.6s ease-out;
-        }
-
-        /* Loading State */
-        .mathjax-loading {
-            position: relative;
-            min-height: 40px;
-        }
-
-        .btn-hitech {
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2), 0 2px 4px -1px rgba(16, 185, 129, 0.1);
-        }
-
-        .btn-hitech:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3), 0 4px 6px -2px rgba(16, 185, 129, 0.1);
-        }
-
-        .btn-hitech:active {
-            transform: translateY(0);
-        }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-        }
-
-        /* MathJax Adjustments - Responsive */
-        mjx-container {
-            font-size: 100% !important;
-            overflow-x: auto;
-            overflow-y: hidden;
-            max-width: 100%;
-        }
-
-        @media (min-width: 640px) {
-            mjx-container {
-                font-size: 110% !important;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            mjx-container {
-                font-size: 120% !important;
-            }
-        }
-
-        /* Touch-friendly buttons on mobile */
-        @media (max-width: 640px) {
-
-            button,
-            .btn-hitech {
-                min-height: 44px;
-            }
-        }
-
-        /* Enhanced Focus Indicators */
-        *:focus-visible {
-            outline: 3px solid #10b981;
-            outline-offset: 2px;
-            border-radius: 4px;
-        }
-
-        #examples-container .mathjax-loading mjx-container {
-            display: block !important;
-            margin: 1em auto !important;
-            text-align: center;
-            max-width: 100%;
-            overflow-x: visible;
-        }
-
-        /* Hamburger Menu Transition */
-        #mobile-menu {
-            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-        }
-
-        #mobile-menu.open {
-            max-height: 500px;
-            opacity: 1;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0284c7">
+<meta name="description" content="Homecoming - ระบบจัดการการกลับบ้าน การพัก/ลา และการกลับเข้าหอพักนักเรียน">
+<title>Homecoming | ระบบจัดการหอพักนักเรียน</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--blue:#0284c7;--blue2:#0ea5e9;--sky:#e0f2fe;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--bg:#f8fafc;--card:#fff;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--shadow:0 10px 35px rgba(15,23,42,.08);--r:20px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:"Prompt","Noto Sans Thai",system-ui,sans-serif;background:linear-gradient(180deg,#f0f9ff 0,#f8fafc 28%,#f8fafc 100%);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}.app{min-height:100vh}.topbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(15px);border-bottom:1px solid rgba(226,232,240,.8)}.topbar-in{max-width:1200px;margin:auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:12px}.logo{width:46px;height:46px;border-radius:14px;object-fit:cover;background:#e0f2fe;border:1px solid #bae6fd}.brand h1{font-size:19px;margin:0;line-height:1.15}.brand p{font-size:11px;color:var(--muted);margin:4px 0 0}.top-actions{display:flex;gap:8px}.icon-btn,.ghost{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 11px;color:#334155}.icon-btn:hover,.ghost:hover{background:#f8fafc}.main{max-width:1200px;margin:auto;padding:18px 16px 96px}.page{animation:up .25s ease}.hero{background:linear-gradient(135deg,#0369a1,#0ea5e9);color:#fff;border-radius:28px;padding:28px;box-shadow:var(--shadow);overflow:hidden;position:relative}.hero:after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:-90px;top:-100px;background:rgba(255,255,255,.12)}.hero h2{margin:0 0 8px;font-size:30px}.hero p{margin:0;color:#e0f2fe;max-width:670px;line-height:1.7}.hero-row{display:flex;align-items:end;justify-content:space-between;gap:20px;position:relative;z-index:1}.grid{display:grid;gap:14px}.roles{grid-template-columns:repeat(4,1fr);margin-top:18px}.role{background:#fff;border:1px solid rgba(255,255,255,.55);border-radius:18px;padding:20px;text-align:left;box-shadow:0 8px 22px rgba(2,132,199,.14);transition:.2s}.role:hover{transform:translateY(-2px)}.role .ico{font-size:28px}.role strong{display:block;font-size:16px;margin-top:8px}.role span{font-size:12px;color:#64748b}.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 12px}.section-title h3{margin:0;font-size:20px}.cards{grid-template-columns:repeat(4,1fr)}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 4px 16px rgba(15,23,42,.04);padding:18px}.stat{display:flex;align-items:center;gap:12px}.stat .ico{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#e0f2fe;font-size:23px}.stat b{display:block;font-size:28px}.stat small{color:var(--muted)}.quick{grid-template-columns:repeat(4,1fr)}.quick button{padding:16px;border-radius:16px;border:1px solid var(--line);background:#fff;text-align:left;box-shadow:0 5px 16px rgba(15,23,42,.04)}.quick button:hover{border-color:#7dd3fc;background:#f0f9ff}.quick b{display:block;margin-top:5px}.toolbar{display:flex;gap:9px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:600}.p-blue{background:#e0f2fe;color:#075985}.p-ok{background:#dcfce7;color:#166534}.p-warn{background:#fef3c7;color:#92400e}.p-bad{background:#fee2e2;color:#991b1b}.form{display:grid;gap:12px}.two{grid-template-columns:repeat(2,1fr)}label{font-size:12px;color:#475569;font-weight:600}input,select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;color:var(--ink);outline:none}input:focus,select:focus,textarea:focus{border-color:#38bdf8;box-shadow:0 0 0 3px #e0f2fe}textarea{min-height:100px;resize:vertical}.btn{border:0;border-radius:12px;padding:11px 15px;background:var(--blue);color:#fff;font-weight:600}.btn:hover{background:#0369a1}.btn.secondary{background:#0f172a}.btn.ok{background:var(--ok)}.btn.bad{background:var(--bad)}.btn.light{background:#e0f2fe;color:#075985}.btn:disabled{opacity:.55;cursor:not-allowed}.nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:flex;justify-content:center}.nav-in{max-width:800px;width:100%;display:flex;justify-content:space-around}.nav button{border:0;background:transparent;color:#64748b;padding:8px 12px;border-radius:12px;font-size:11px;min-width:70px}.nav button.active{color:#0369a1;background:#e0f2fe;font-weight:700}.list{display:grid;gap:9px}.list-item{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff}.list-main{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.muted{color:var(--muted);font-size:12px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff}.table{border-collapse:collapse;width:100%;min-width:760px}.table th,.table td{padding:11px 12px;border-bottom:1px solid #f1f5f9;text-align:left;font-size:13px}.table th{background:#f8fafc;color:#475569;font-size:12px}.thumb{width:54px;height:54px;border-radius:12px;object-fit:cover;border:1px solid var(--line)}.center{text-align:center}.empty{padding:32px 10px;text-align:center;color:#94a3b8}.toast{position:fixed;top:72px;right:16px;z-index:50;max-width:340px;background:#0f172a;color:#fff;padding:12px 14px;border-radius:12px;box-shadow:var(--shadow);display:none}.modal{position:fixed;inset:0;z-index:40;background:rgba(15,23,42,.45);display:none;align-items:end;justify-content:center;padding:12px}.modal.open{display:flex}.modal-box{background:#fff;width:min(720px,100%);max-height:90vh;overflow:auto;border-radius:24px;padding:18px;box-shadow:var(--shadow)}.modal-head{display:flex;align-items:center;justify-content:space-between}.modal-head h3{margin:0}.photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.photo-grid img{width:100%;max-height:260px;object-fit:cover;border-radius:14px;border:1px solid var(--line)}.login-box{max-width:520px;margin:14vh auto;background:#fff;border:1px solid var(--line);border-radius:28px;padding:24px;box-shadow:var(--shadow)}.student-head{display:flex;align-items:center;gap:14px}.student-avatar{width:72px;height:72px;border-radius:18px;object-fit:cover;background:#e0f2fe;border:1px solid var(--line)}.badge-big{font-size:22px;font-weight:700}.notice{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;padding:12px;font-size:12px;color:#475569;line-height:1.7}@keyframes up{from{opacity:.2;transform:translateY(6px)}to{opacity:1;transform:none}}@media(max-width:900px){.roles,.cards,.quick{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.topbar-in,.main{padding-left:12px;padding-right:12px}.brand h1{font-size:16px}.brand p{display:none}.hero{padding:20px;border-radius:22px}.hero h2{font-size:25px}.hero-row{display:block}.roles,.cards,.quick,.two{grid-template-columns:1fr}.card{padding:15px}.nav button{min-width:56px;padding:7px 4px}.toolbar>*{width:100%}.table{min-width:680px}.modal{padding:0}.modal-box{border-radius:24px 24px 0 0}}
+</style>
 </head>
-
-<body class="text-slate-800 overflow-x-hidden">
-
-    <!-- Navbar -->
-    <nav class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <!-- Logo & Brand -->
-                <div class="flex items-center cursor-pointer" onclick="showSection('home')">
-                    <i class="fa-solid fa-laptop-code text-emerald-600 text-2xl sm:text-3xl mr-2"></i>
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2 leading-tight">
-                        <span class="font-bold text-sm sm:text-lg md:text-xl text-slate-900 tracking-wide">วิทยาการคำนวณ (Coding)</span>
-                        <span class="hidden sm:inline text-slate-300">|</span>
-                        <span class="text-xs sm:text-base md:text-lg text-emerald-600 font-medium">แนวคิดเชิงคำนวณ ม.2</span>
-                    </div>
-                </div>
-
-                <!-- Desktop Menu -->
-                <div class="hidden sm:flex items-center space-x-4">
-                    <button onclick="showSection('home')"
-                        class="text-slate-500 hover:text-emerald-600 transition px-3 py-2 rounded-md text-sm font-medium hover:bg-emerald-50">
-                        <i class="fa-solid fa-house mr-1"></i> หน้าแรก
-                    </button>
-                    <button onclick="showSection('learn')"
-                        class="text-slate-500 hover:text-emerald-600 transition px-3 py-2 rounded-md text-sm font-medium hover:bg-emerald-50">
-                        <i class="fa-solid fa-book-open mr-1"></i> ทบทวนเนื้อหา
-                    </button>
-                </div>
-
-                <!-- Mobile Hamburger Button -->
-                <div class="flex sm:hidden">
-                    <button onclick="toggleMobileMenu()"
-                        class="text-slate-500 hover:text-emerald-600 focus:outline-none p-2" aria-label="เมนูหลัก">
-                        <i class="fa-solid fa-bars text-2xl"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mobile Menu Dropdown -->
-        <div id="mobile-menu" class="bg-white border-t border-slate-100 sm:hidden">
-            <div class="px-4 py-3 space-y-3">
-                <button onclick="showSection('home'); toggleMobileMenu()"
-                    class="block w-full text-left text-slate-600 hover:text-emerald-600 font-medium py-2 border-b border-slate-50">
-                    <i class="fa-solid fa-house mr-2 text-emerald-500"></i> กลับหน้าแรก
-                </button>
-                <button onclick="showSection('learn'); toggleMobileMenu()"
-                    class="block w-full text-left text-slate-600 hover:text-emerald-600 font-medium py-2 border-b border-slate-50">
-                    <i class="fa-solid fa-book-open mr-2 text-emerald-500"></i> ทบทวนเนื้อหา
-                </button>
-                <!-- Info Section inside Hamburger for Mobile -->
-                <div class="pt-2 text-xs text-slate-500 space-y-2">
-                    <div class="flex items-center">
-                        <i class="fa-solid fa-code text-emerald-500 w-5"></i>
-                        <span>รายวิชา วิทยาการคำนวณ (Coding) ชั้น ม.2</span>
-                    </div>
-                    <div class="flex items-center">
-                        <i class="fa-solid fa-chalkboard-user text-teal-600 w-5"></i>
-                        <span>ครูผู้สอน: ภูวเนศ อิทธิสิริศักดิ์</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Header Info (Desktop/Tablet Only) -->
-    <div class="hidden sm:block bg-gradient-to-r from-emerald-50 via-teal-50 to-sky-50 border-b border-emerald-100">
-        <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 text-center sm:text-left">
-                <div class="text-xs sm:text-sm text-slate-600">
-                    <i class="fa-solid fa-microchip text-emerald-600 mr-1"></i>
-                    <span class="font-medium">รายวิชา วิทยาการคำนวณ (Coding)</span>
-                    <span class="mx-1 sm:mx-2 text-slate-400">|</span>
-                    <span class="font-mono">ระดับชั้น มัธยมศึกษาปีที่ 2</span>
-                </div>
-                <div class="text-xs sm:text-sm text-slate-600">
-                    <i class="fa-solid fa-brain text-teal-600 mr-1"></i>
-                    <span>หัวข้อ: แนวคิดเชิงคำนวณ (Computational Thinking)</span>
-                </div>
-                <div class="text-xs sm:text-sm text-slate-600">
-                    <i class="fa-solid fa-user-gear text-indigo-600 mr-1"></i>
-                    <span class="font-medium">ครูผู้สอน:</span> <span>ภูวเนศ อิทธิสิริศักดิ์</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Container -->
-    <main class="max-w-6xl mx-auto p-3 sm:p-4 md:p-6 mb-6 sm:mb-10">
-
-        <!-- SECTION: HOME -->
-        <section id="home"
-            class="fade-in min-h-[70vh] sm:min-h-[80vh] flex flex-col items-center justify-center text-center py-4 sm:py-6">
-            <div
-                class="bg-white rounded-2xl sm:rounded-3xl shadow-xl p-6 sm:p-8 md:p-10 lg:p-16 relative overflow-hidden max-w-4xl w-full border border-emerald-100">
-                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500"></div>
-
-                <div class="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full mb-3">
-                    <i class="fa-solid fa-lightbulb"></i> ทักษะการคิดวิเคราะห์ & การแก้ปัญหาเชิงปฏิบัติ
-                </div>
-
-                <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800 mb-3 sm:mb-4 px-2">
-                    แนวคิดเชิงคำนวณ
-                </h1>
-                <p class="text-base sm:text-lg text-slate-500 mb-6 sm:mb-8 md:mb-10 px-2">
-                    Computational Thinking for Problem Solving (ม.2)
-                </p>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 mb-8 sm:mb-10 md:mb-12">
-                    <button onclick="showSection('learn')"
-                        class="btn-hitech bg-white border-2 border-emerald-100 p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl flex flex-col items-center hover:border-emerald-500 hover:bg-emerald-50 active:scale-95 group focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        <div
-                            class="bg-emerald-100 text-emerald-600 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-xl sm:text-2xl mb-3 sm:mb-4 group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-                            <i class="fa-solid fa-book-open"></i>
-                        </div>
-                        <h3 class="font-semibold text-base sm:text-lg text-slate-700">เรียนรู้บทเรียน</h3>
-                        <p class="text-xs sm:text-sm text-slate-500 mt-1 sm:mt-2">4 องค์ประกอบเชิงคำนวณ</p>
-                    </button>
-
-                    <button onclick="setupGroupQuiz()"
-                        class="btn-hitech bg-white border-2 border-emerald-100 p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl flex flex-col items-center hover:border-teal-500 hover:bg-teal-50 active:scale-95 group focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                        <div
-                            class="bg-teal-100 text-teal-600 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-xl sm:text-2xl mb-3 sm:mb-4 group-hover:bg-teal-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-                            <i class="fa-solid fa-users"></i>
-                        </div>
-                        <h3 class="font-semibold text-base sm:text-lg text-slate-700">ภารกิจท้าทายแบบกลุ่ม</h3>
-                        <p class="text-xs sm:text-sm text-slate-500 mt-1 sm:mt-2">สุ่มสถานการณ์แก้ปัญหา 4 กลุ่ม</p>
-                    </button>
-
-                    <button onclick="setupSoloQuiz()"
-                        class="btn-hitech bg-white border-2 border-emerald-100 p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl flex flex-col items-center hover:border-sky-500 hover:bg-sky-50 active:scale-95 group sm:col-span-2 lg:col-span-1 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                        <div
-                            class="bg-sky-100 text-sky-600 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-xl sm:text-2xl mb-3 sm:mb-4 group-hover:bg-sky-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-                            <i class="fa-solid fa-user-ninja"></i>
-                        </div>
-                        <h3 class="font-semibold text-base sm:text-lg text-slate-700">ทดสอบเดี่ยวรายบุคคล</h3>
-                        <p class="text-xs sm:text-sm text-slate-500 mt-1 sm:mt-2">วัดทักษะเฉพาะบุคคล</p>
-                    </button>
-                </div>
-
-                <div class="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-100">
-                    <p class="text-slate-500 text-xs sm:text-sm font-light px-2">
-                        <i class="fa-solid fa-chalkboard-user mr-1 text-emerald-600"></i> สื่อการสอนรายวิชา Coding ม.2 โดย: <span
-                            class="text-emerald-700 font-semibold">ครูภูวเนศ อิทธิสิริศักดิ์</span>
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION: LEARN -->
-        <section id="learn" class="hidden fade-in">
-            <div class="mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3 flex-wrap">
-                <button onclick="showSection('home')"
-                    class="bg-white p-2 sm:p-2.5 rounded-full shadow hover:bg-slate-50 text-slate-600 text-sm sm:text-base focus:ring-2 focus:ring-emerald-500">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </button>
-                <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-slate-800">สรุปบทเรียน: แนวคิดเชิงคำนวณ (Computational Thinking)</h2>
-            </div>
-
-            <!-- Concept Card -->
-            <div class="glass-panel p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl shadow-sm mb-4 sm:mb-6 border-l-4 border-emerald-500">
-                <h3 class="text-lg sm:text-xl font-bold text-emerald-800 mb-2">
-                    <i class="fa-solid fa-brain mr-2 text-emerald-600"></i>แนวคิดเชิงคำนวณคืออะไร?
-                </h3>
-                <p class="text-sm sm:text-base text-slate-700 leading-relaxed mb-3">
-                    กระบวนการคิดวิเคราะห์อย่างเป็นระบบและเป็นขั้นตอน เพื่อแก้ปัญหาที่ซับซ้อนได้อย่างมีประสิทธิภาพ โดยไม่ได้จำกัดเฉพาะการเขียนโค้ด แต่สามารถประยุกต์ใช้ในชีวิตประจำวันและการทำงานได้ทุกแขนง ประกอบด้วย 4 Pillar ดังนี้:
-                </p>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
-                    <div class="bg-emerald-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-emerald-200">
-                        <div class="font-bold text-sm sm:text-base text-emerald-700 flex items-center gap-1.5 mb-1">
-                            <i class="fa-solid fa-puzzle-piece text-emerald-600"></i> 1. Decomposition
-                        </div>
-                        <div class="text-xs sm:text-sm font-semibold text-slate-800 mb-1">การแตกย่อยปัญหา</div>
-                        <div class="text-xs text-slate-600">แบ่งปัญหาใหญ่หรือระบบที่ซับซ้อนออกเป็นส่วนย่อยๆ เพื่อให้จัดการง่ายขึ้น</div>
-                    </div>
-
-                    <div class="bg-teal-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-teal-200">
-                        <div class="font-bold text-sm sm:text-base text-teal-700 flex items-center gap-1.5 mb-1">
-                            <i class="fa-solid fa-magnifying-glass-chart text-teal-600"></i> 2. Pattern Recognition
-                        </div>
-                        <div class="text-xs sm:text-sm font-semibold text-slate-800 mb-1">การพิจารณารูปแบบ</div>
-                        <div class="text-xs text-slate-600">ค้นหาความเหมือน รูปแบบที่เกิดขึ้นซ้ำๆ หรือแนวโน้มในชุดข้อมูลเพื่อคาดการณ์</div>
-                    </div>
-
-                    <div class="bg-sky-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-sky-200">
-                        <div class="font-bold text-sm sm:text-base text-sky-700 flex items-center gap-1.5 mb-1">
-                            <i class="fa-solid fa-filter text-sky-600"></i> 3. Abstraction
-                        </div>
-                        <div class="text-xs sm:text-sm font-semibold text-slate-800 mb-1">แนวคิดเชิงนามธรรม</div>
-                        <div class="text-xs text-slate-600">คัดเลือกเฉพาะสาระสำคัญ คัดรายละเอียดที่ไม่จำเป็นออกเพื่อสร้างแบบจำลอง</div>
-                    </div>
-
-                    <div class="bg-indigo-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-indigo-200">
-                        <div class="font-bold text-sm sm:text-base text-indigo-700 flex items-center gap-1.5 mb-1">
-                            <i class="fa-solid fa-list-check text-indigo-600"></i> 4. Algorithm Design
-                        </div>
-                        <div class="text-xs sm:text-sm font-semibold text-slate-800 mb-1">การออกแบบอัลกอริทึม</div>
-                        <div class="text-xs text-slate-600">วางลำดับขั้นตอนการแก้ปัญหาเป็นข้อๆ หรือ Flowchart ที่นำไปปฏิบัติตามได้จริง</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Examples -->
-            <div class="space-y-4 sm:space-y-6">
-                <h3 class="text-base sm:text-lg font-bold text-slate-700 ml-1 sm:ml-2">
-                    <i class="fa-solid fa-laptop-code text-emerald-600 mr-2"></i>ตัวอย่างการวิเคราะห์คำนวณเชิงการประมวลผล
-                </h3>
-
-                <!-- Example Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 md:gap-6" id="examples-container">
-                    <!-- Example items will be injected by JS -->
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION: GROUP QUIZ -->
-        <section id="group-quiz" class="hidden fade-in">
-            <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    <button onclick="showSection('home')"
-                        class="bg-white p-2 sm:p-2.5 rounded-full shadow hover:bg-slate-50 text-slate-600 text-sm sm:text-base focus:ring-2 focus:ring-emerald-500">
-                        <i class="fa-solid fa-arrow-left"></i>
-                    </button>
-                    <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-slate-800">ภารกิจทดสอบแบบกลุ่ม (Group Computational Quiz)</h2>
-                </div>
-                <button onclick="setupGroupQuiz()"
-                    class="btn-hitech bg-emerald-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg hover:bg-emerald-700 active:scale-95 text-sm sm:text-base w-full sm:w-auto focus:ring-2 focus:ring-emerald-300">
-                    <i class="fa-solid fa-shuffle mr-2"></i> สุ่มโจทย์ใหม่
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 md:gap-6" id="group-quiz-container">
-                <!-- Group cards generated by JS -->
-            </div>
-        </section>
-
-        <!-- SECTION: SOLO QUIZ -->
-        <section id="solo-quiz" class="hidden fade-in">
-            <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    <button onclick="showSection('home')"
-                        class="bg-white p-2 sm:p-2.5 rounded-full shadow hover:bg-slate-50 text-slate-600 text-sm sm:text-base focus:ring-2 focus:ring-emerald-500">
-                        <i class="fa-solid fa-arrow-left"></i>
-                    </button>
-                    <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-slate-800">ทดสอบเดี่ยวรายบุคคล (Solo Computational Quiz)</h2>
-                </div>
-                <button onclick="setupSoloQuiz()"
-                    class="btn-hitech bg-sky-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg hover:bg-sky-700 active:scale-95 text-sm sm:text-base w-full sm:w-auto focus:ring-2 focus:ring-sky-300">
-                    <i class="fa-solid fa-shuffle mr-2"></i> สุ่มโจทย์ใหม่
-                </button>
-            </div>
-
-            <div class="max-w-2xl mx-auto" id="solo-quiz-container">
-                <!-- Solo card generated by JS -->
-            </div>
-        </section>
-
-    </main>
-
-    <!-- JS LOGIC -->
-    <script>
-        // --- MOBILE MENU LOGIC ---
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            if (menu.classList.contains('open')) {
-                menu.classList.remove('open');
-            } else {
-                menu.classList.add('open');
-            }
-        }
-
-        // --- CONSTANTS & SCENARIOS BASE FOR COMPUTATIONAL THINKING ---
-        const scenariosBase = [
-            {
-                id: 'decomposition_tasks',
-                type: 'Decomposition (แตกย่อยปัญหา)',
-                title: 'การแบ่งภารกิจพัฒนาโปรแกรมระบบ',
-                desc: 'ทีมพัฒนาแอปพลิเคชันมีสมาชิก <b>[N]</b> คน แต่ละคนต้องรับผิดชอบเขียนโมดูลโปรแกรมคนละ 4 โมดูล และทุกๆ 1 โมดูลจะต้องทำการทดสอบระบบ (Unit Test) อีก 2 ขั้นตอน จงคำนวณหาจำนวนภารกิจย่อยทั้งหมดที่ทีมนี้ต้องปฏิบัติ',
-                varUnit: 'คน',
-                ansUnit: 'ภารกิจย่อย',
-                solve: (n) => {
-                    // Each person handles 4 modules.
-                    // Each module has 1 coding task + 2 testing tasks = 3 sub-tasks.
-                    // Total per person = 4 * 3 = 12 sub-tasks.
-                    // Total for N people = 12 * N
-                    return 12 * n;
-                },
-                formula: '$$ \\text{ภารกิจย่อย} = N \\times 4 \\times (1 + 2) = 12 \\times N $$'
-            },
-            {
-                id: 'pattern_recognition_data',
-                type: 'Pattern Recognition (พิจารณารูปแบบ)',
-                title: 'อนุกรมการเติบโตของข้อมูลไอที',
-                desc: 'ระบบเซิร์ฟเวอร์ตรวจพบปริมาณการส่งข้อมูลเพิ่มขึ้นตามรูปแบบสมการอนุกรม $a_n = 5n + 15$ กิโลไบต์ (KB) หากรอบการประมวลผลปัจจุบันตรงกับรอบที่ <b>[N]</b> จงคำนวณหาปริมาณข้อมูลที่จะเกิดขึ้นในรอบนี้',
-                varUnit: 'รอบที่',
-                ansUnit: 'KB',
-                solve: (n) => {
-                    return (5 * n) + 15;
-                },
-                formula: '$$ \\text{ปริมาณข้อมูล} = 5(N) + 15 \\quad (\\text{KB}) $$'
-            },
-            {
-                id: 'abstraction_compression',
-                type: 'Abstraction (แนวคิดเชิงนามธรรม)',
-                title: 'การคัดเลือกเฉพาะข้อมูลสำคัญ',
-                desc: 'ฐานข้อมูลประวัตินักเรียนมีขนาดไฟล์เต็ม <b>[N]</b>00 เมกะไบต์ (MB) เมื่อนำหลัก Abstraction มาคัดเลือกเฉพาะข้อมูลที่จำเป็นต่อการวิเคราะห์ (ตัดข้อมูลรูปภาพและประวัติที่ไม่ใช้ออก) ทำให้เหลือขนาดไฟล์เพียง 25% ของขนาดเดิม จงคำนวณหาขนาดไฟล์ใหม่หลังผ่านกระบวนการคัดกรอง',
-                varUnit: '×100 MB',
-                ansUnit: 'MB',
-                solve: (n) => {
-                    const originalSize = n * 100;
-                    return originalSize * 0.25;
-                },
-                formula: '$$ \\text{ขนาดหลัง Abstraction} = (N \\times 100) \\times 0.25 = 25 \\times N \\quad (\\text{MB}) $$'
-            },
-            {
-                id: 'algorithm_loop_time',
-                type: 'Algorithm Design (การออกแบบอัลกอริทึม)',
-                title: 'เวลาประมวลผลภาพแบบวนซ้ำ (Nested Loop)',
-                desc: 'อัลกอริทึมประมวลผลพิกเซลรูปภาพมีการทำงานแบบคำสั่งวนซ้ำ (Loop) โดยลูปรอบนอกทำงาน <b>[N]</b> รอบ และแต่ละรอบจะสั่งให้ลูปรอบในทำงานประมวลผลนาน 8 วินาที จงคำนวณหาระยะเวลารวมทั้งหมดในการทำงานของอัลกอริทึมนี้',
-                varUnit: 'รอบ',
-                ansUnit: 'วินาที',
-                solve: (n) => {
-                    return n * 8;
-                },
-                formula: '$$ \\text{เวลารวม} = N \\times 8 \\quad (\\text{วินาที}) $$'
-            },
-            {
-                id: 'binary_search_steps',
-                type: 'Algorithm (การค้นหาข้อมูล)',
-                title: 'ขั้นตอนค้นหาแบบ Binary Search',
-                desc: 'เมื่อมีฐานข้อมูลที่เรียงลำดับแล้วจำนวน <b>[N]</b>00 รายการ หากใช้อัลกอริทึมค้นหาแบบแบ่งครึ่ง (Binary Search) จงคำนวณหาจำนวนครั้งเปรียบเทียบสูงสุด (Worst Case) ในการค้นหาตามสูตร $ \\lfloor \\log_2(\\text{จำนวนข้อมูล}) \\rfloor + 1 $',
-                varUnit: '×100 รายการ',
-                ansUnit: 'ครั้ง',
-                solve: (n) => {
-                    const totalItems = n * 100;
-                    return Math.floor(Math.log2(totalItems)) + 1;
-                },
-                formula: '$$ \\text{Max Comparisons} = \\lfloor \\log_2(N \\times 100) \\rfloor + 1 $$'
-            },
-            {
-                id: 'logic_condition_score',
-                type: 'Computational Logic (เงื่อนไขและคะแนน)',
-                title: 'เงื่อนไขคำนวณคะแนนในเกม',
-                desc: 'ผู้เขียนโค้ดตั้งเงื่อนไขว่า ถ้าผู้เล่นพิชิตด่านได้ <b>[N]</b> ด่าน จะได้คะแนนพื้นฐานด่านละ 50 คะแนน และได้รับคะแนนโบนัสพิเศษเพิ่มอีก 20% ของคะแนนพื้นฐานรวม จงคำนวณหาคะแนนรวมทั้งหมดที่ผู้เล่นจะได้รับ',
-                varUnit: 'ด่าน',
-                ansUnit: 'คะแนน',
-                solve: (n) => {
-                    const baseScore = n * 50;
-                    return baseScore * 1.2;
-                },
-                formula: '$$ \\text{คะแนนรวม} = (N \\times 50) \\times 1.2 = 60 \\times N $$'
-            },
-            {
-                id: 'algorithm_optimization',
-                type: 'Algorithm Optimization (การลดขั้นตอน)',
-                title: 'การหาเส้นทางสั้นที่สุดของหุ่นยนต์',
-                desc: 'หุ่นยนต์ส่งของใช้พลังงาน <b>[N]</b> หน่วยต่อการเคลื่อนที่ 1 เมตร เส้นทางเดิมต้องเดินทาง 15 เมตร แต่นักเรียนได้ปรับใช้อัลกอริทึม Shortest Path ทำให้สามารถลดระยะทางเหลือเพียง 60% ของเส้นทางเดิม จงคำนวณหาพลังงานรวมที่หุ่นยนต์ต้องใช้ในเส้นทางใหม่นี้',
-                varUnit: 'หน่วย/เมตร',
-                ansUnit: 'หน่วยพลังงาน',
-                solve: (n) => {
-                    const newDistance = 15 * 0.6; // 9 meters
-                    return newDistance * n;
-                },
-                formula: '$$ \\text{พลังงานที่ใช้} = (15 \\times 0.6) \\times N = 9 \\times N $$'
-            },
-            {
-                id: 'all_pairs_complexity',
-                type: 'Decomposition & Logic (ความซับซ้อน)',
-                title: 'การเปรียบเทียบจับคู่สมาชิกระบบ',
-                desc: 'ในระบบเครือข่ายมีเครื่องคอมพิวเตอร์จำนวน <b>[N]</b>0 เครื่อง หากต้องการทดสอบส่งสัญญาณเชื่อมต่อแบบจับคู่ทุกคู่อันดับ (All Pairs) โดยคำนวณจากสูตร $ \\frac{M(M-1)}{2} $ (เมื่อ $M = [N] \\times 10$) จงหาจำนวนคู่การเชื่อมต่อทั้งหมด',
-                varUnit: '×10 เครื่อง',
-                ansUnit: 'คู่',
-                solve: (n) => {
-                    const m = n * 10;
-                    return (m * (m - 1)) / 2;
-                },
-                formula: '$$ \\text{จำนวนคู่} = \\frac{(10N)(10N - 1)}{2} $$'
-            }
-        ];
-
-        // Updated example data for Computational Thinking
-        const exampleData = [
-            {
-                type: 'Decomposition (แตกย่อยปัญหา)',
-                title: 'การแบ่งงานวางระบบเครือข่ายโรงเรียน',
-                q: 'โรงเรียนต้องการติดตั้งคอมพิวเตอร์ในห้องปฏิบัติการ 5 ห้อง แต่ละห้องมีคอมพิวเตอร์ 30 เครื่อง และต้องต่อสาย LAN ให้เครื่องละ 1 เส้น พร้อมทดสอบสัญญาณเครื่องละ 2 รอบ จงหาจำนวนภารกิจย่อยทั้งหมดในการทำงานนี้',
-                method: '$$ \\text{จำนวนเครื่องทั้งหมด} = 5 \\times 30 = 150 \\text{ เครื่อง} $$ $$ \\text{ภารกิจต่อเครื่อง} = 1 (\\text{ต่อสาย}) + 2 (\\text{ทดสอบ}) = 3 \\text{ งาน} $$ $$ \\text{ภารกิจรวมทั้งหมด} = 150 \\times 3 = 450 \\text{ งานย่อย} $$'
-            },
-            {
-                type: 'Pattern Recognition (พิจารณารูปแบบ)',
-                title: 'การวิเคราะห์ลำดับรอบการส่งข้อมูล',
-                q: 'ในการส่งแพ็กเกจข้อมูล ตรวจพบว่าจำนวนแพ็กเกจเพิ่มขึ้นตามรูปแบบ $P_n = 2n^2 + 3$ แพ็กเกจ จงคำนวณหาจำนวนแพ็กเกจที่จะถูกส่งในรอบที่ 5 ($n=5$)',
-                method: '$$ P_n = 2n^2 + 3 $$ $$ P_5 = 2(5)^2 + 3 $$ $$ P_5 = 2(25) + 3 = 50 + 3 = 53 \\text{ แพ็กเกจ} $$'
-            },
-            {
-                type: 'Abstraction (แนวคิดเชิงนามธรรม)',
-                title: 'การบีบอัดภาพและกรองข้อมูลไม่จำเป็น',
-                q: 'ภาพถ่ายดิจิทัลมีขนาดข้อมูลเดิม 12.0 เมกะไบต์ (MB) เมื่อนำเข้ากระบวนการ Abstraction เพื่อตัดข้อมูลที่ไม่ส่งผลต่อสายตามนุษย์ออก ทำให้ขนาดภาพลดลงเหลือ 15% ของขนาดเดิม จงหาขนาดไฟล์ภาพใหม่',
-                method: '$$ \\text{ขนาดภาพใหม่} = \\text{ขนาดเดิม} \\times 15\\% $$ $$ \\text{ขนาดภาพใหม่} = 12.0 \\times 0.15 = 1.80 \\text{ MB} $$'
-            },
-            {
-                type: 'Algorithm Design (การออกแบบอัลกอริทึม)',
-                title: 'การคำนวณรอบคำสั่ง Loop ในโปรแกรม',
-                q: 'โปรแกรมมีคำสั่งวนซ้ำเพื่อประมวลผลตารางข้อมูลขนาด $N \\times N$ หากกำหนดให้ $N = 20$ และในแต่ละช่องจะใช้เวลาประมวลผล 0.5 วินาที จงหาเวลารวมที่โปรแกรมใช้ประมวลผลทั้งตาราง',
-                method: '$$ \\text{จำนวนช่องข้อมูลทั้งหมด} = N \\times N = 20 \\times 20 = 400 \\text{ ช่อง} $$ $$ \\text{เวลารวม} = 400 \\times 0.5 = 200 \\text{ วินาที} $$'
-            },
-            {
-                type: 'Algorithm (การค้นหาข้อมูล)',
-                title: 'เปรียบเทียบ Linear Search vs Binary Search',
-                q: 'รายการข้อมูลเรียงลำดับจำนวน 1,000 รายการ ในกรณีที่แย่ที่สุด (Worst Case) การค้นหาแบบ Linear Search ต้องตรวจกี่ครั้ง และ Binary Search ต้องตรวจกี่ครั้ง',
-                method: '$$ \\text{Linear Search (Worst Case)} = 1,000 \\text{ ครั้ง} $$ $$ \\text{Binary Search} = \\lfloor \\log_2(1000) \\rfloor + 1 = 9 + 1 = 10 \\text{ ครั้ง} $$'
-            },
-            {
-                type: 'Optimization (การเพิ่มประสิทธิภาพ)',
-                title: 'การคำนวณลดทอนเวลาประมวลผล',
-                q: 'อัลกอริทึม A ใช้เวลาประมวลผล $100$ วินาที แต่เมื่อพัฒนาเป็นอัลกอริทึม B สามารถประมวลผลได้เร็วขึ้น 40% จงหาเวลาที่อัลกอริทึม B ใช้ในการทำงาน',
-                method: '$$ \\text{เวลาที่ลดลง} = 100 \\times 0.40 = 40 \\text{ วินาที} $$ $$ \\text{เวลาของอัลกอริทึม B} = 100 - 40 = 60 \\text{ วินาที} $$'
-            }
-        ];
-
-        // --- MATHJAX UTILS ---
-        let mathJaxLoading = false;
-
-        function typesetMath(container = null) {
-            if (window.MathJax) {
-                mathJaxLoading = true;
-                const target = container || document.body;
-
-                if (container) {
-                    container.classList.add('mathjax-loading');
-                }
-
-                MathJax.typesetPromise([target]).then(() => {
-                    mathJaxLoading = false;
-                    if (container) {
-                        container.classList.remove('mathjax-loading');
-                    }
-                }).catch((err) => {
-                    mathJaxLoading = false;
-                    if (container) {
-                        container.classList.remove('mathjax-loading');
-                    }
-                    console.warn('MathJax rendering error:', err);
-                });
-            }
-        }
-
-        // --- NAVIGATION ---
-        function showSection(id) {
-            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-            window.scrollTo(0, 0);
-
-            // Close mobile menu if open
-            document.getElementById('mobile-menu').classList.remove('open');
-
-            if (id === 'learn') {
-                renderExamples();
-            } else {
-                setTimeout(typesetMath, 50);
-            }
-        }
-
-        // Toggle Solution Function
-        function toggleSolution(index) {
-            const solDiv = document.getElementById(`sol-${index}`);
-            const btn = document.getElementById(`btn-sol-${index}`);
-
-            if (solDiv.classList.contains('hidden')) {
-                solDiv.classList.remove('hidden');
-                solDiv.classList.add('fade-in');
-                btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-2"></i>ซ่อนขั้นตอนคิด';
-                btn.classList.replace('bg-emerald-100', 'bg-slate-200');
-                btn.classList.replace('text-emerald-800', 'text-slate-700');
-                typesetMath(solDiv);
-            } else {
-                solDiv.classList.add('hidden');
-                solDiv.classList.remove('fade-in');
-                btn.innerHTML = '<i class="fa-solid fa-eye mr-2"></i>แสดงขั้นตอนคิด';
-                btn.classList.replace('bg-slate-200', 'bg-emerald-100');
-                btn.classList.replace('text-slate-700', 'text-emerald-800');
-            }
-        }
-
-        // --- RENDER LEARN SECTION ---
-        function renderExamples() {
-            const container = document.getElementById('examples-container');
-            container.innerHTML = exampleData.map((ex, idx) => {
-                const visualContent = ex.visual ? `
-                    <div class="mb-3 sm:mb-4 flex justify-center bg-slate-50 rounded-lg p-4 overflow-hidden">
-                       ${ex.visual}
-                    </div>` : '';
-
-                return `
-                <div class="bg-white p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition flex flex-col justify-between" role="article" aria-label="ตัวอย่างที่ ${idx + 1}: ${ex.title}">
-                    <div>
-                        <div class="flex items-center justify-between mb-2 sm:mb-3 flex-wrap gap-2">
-                            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 sm:px-3 py-1 rounded-full" aria-label="ประเภท: ${ex.type}">${ex.type}</span>
-                            <span class="text-slate-400 text-xs sm:text-sm">Ex ${idx + 1}</span>
-                        </div>
-                        <h4 class="font-bold text-sm sm:text-base text-slate-800 mb-2">${ex.title}</h4>
-                        <p class="text-slate-600 text-xs sm:text-sm mb-3 sm:mb-4 leading-relaxed">${ex.q}</p>
-                        ${visualContent}
-                    </div>
-                    
-                    <div>
-                        <button id="btn-sol-${idx}" onclick="toggleSolution(${idx})" class="w-full bg-emerald-100 text-emerald-800 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-emerald-200 transition mb-2">
-                            <i class="fa-solid fa-eye mr-2"></i>แสดงขั้นตอนคิด
-                        </button>
-
-                        <div id="sol-${idx}" class="hidden bg-slate-50 p-2 sm:p-3 rounded-lg border border-slate-200 transition-all duration-300">
-                            <p class="text-xs text-slate-600 font-semibold mb-1">แนวคิดการคำนวณประมวลผล:</p>
-                            <div class="text-slate-800 text-xs sm:text-sm mathjax-loading">
-                                ${ex.method}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }).join('');
-
-            typesetMath(container);
-        }
-
-        // --- UTILS ---
-        function getRandomScenarios(count) {
-            let shuffled = [...scenariosBase].sort(() => 0.5 - Math.random());
-            return shuffled.slice(0, count);
-        }
-
-        function formatDesc(desc, nVal) {
-            let formatted = desc;
-            if (formatted.includes('<b>[N]</b>')) {
-                formatted = formatted.replace('<b>[N]</b>', `<span class="text-emerald-600 font-bold text-base sm:text-lg underline decoration-dashed">${nVal || '?'}</span>`);
-            }
-            if (formatted.includes('[N]')) {
-                formatted = formatted.replace('[N]', `${nVal || '?'}`);
-            }
-            return formatted;
-        }
-
-        // --- QUIZ LOGIC ---
-        function createQuizCardHTML(scenario, index, isSolo = false) {
-            const cardId = isSolo ? `solo-0` : `group-${index}`;
-            const title = isSolo ? 'ภารกิจทดสอบรายบุคคล' : `กลุ่มที่ ${index + 1}`;
-            const inputLabel = isSolo ? 'เลขที่ของคุณ (N)' : 'ผลรวมเลขที่สมาชิกในกลุ่ม (N)';
-
-            let visualHTML = '';
-            if (scenario.visual) {
-                visualHTML = `<div class="mb-3 flex justify-center" id="visual-${cardId}">${scenario.visual}</div>`;
-            }
-
-            return `
-            <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-100 overflow-hidden" id="card-${cardId}" role="article" aria-label="${title}">
-                <div class="bg-gradient-to-r ${isSolo ? 'from-sky-600 to-cyan-600' : 'from-emerald-600 to-teal-600'} p-3 sm:p-4 text-white flex justify-between items-center flex-wrap gap-2">
-                    <h3 class="font-bold text-base sm:text-lg"><i class="fa-solid ${isSolo ? 'fa-user-ninja' : 'fa-users-gear'} mr-1 sm:mr-2" aria-hidden="true"></i>${title}</h3>
-                    <span class="text-xs bg-white/20 px-2 py-1 rounded text-white font-mono" aria-label="ประเภท: ${scenario.type}">${scenario.type}</span>
-                </div>
-                
-                <div class="p-4 sm:p-5 md:p-6">
-                    ${visualHTML}
-                    <div class="min-h-[60px] sm:min-h-[80px] mb-3 sm:mb-4 text-slate-700 text-xs sm:text-sm leading-relaxed" id="desc-${cardId}" aria-live="polite">
-                        ${formatDesc(scenario.desc, null)}
-                    </div>
-
-                    <div class="space-y-3 sm:space-y-4">
-                        <!-- Input Variable -->
-                        <div>
-                            <label for="input-n-${cardId}" class="block text-xs font-semibold text-slate-500 mb-1">${inputLabel}</label>
-                            <input type="number" id="input-n-${cardId}" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 sm:py-2 text-slate-800 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" placeholder="ป้อนตัวเลข N..." oninput="updateQuestionText('${cardId}', '${scenario.id}')" aria-label="${inputLabel}" onkeypress="if(event.key==='Enter') document.getElementById('input-ans-${cardId}').focus()">
-                        </div>
-
-                        <!-- Input Answer -->
-                        <div>
-                            <label for="input-ans-${cardId}" class="block text-xs font-semibold text-slate-500 mb-1">คำตอบคำนวณได้ (${scenario.ansUnit})</label>
-                            <input type="number" id="input-ans-${cardId}" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 sm:py-2 text-slate-800 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" placeholder="ป้อนผลลัพธ์ตัวเลข" aria-label="คำตอบที่ได้ในหน่วย ${scenario.ansUnit}" onkeypress="if(event.key==='Enter') checkAnswer('${cardId}', '${scenario.id}')">
-                        </div>
-
-                        <div class="flex gap-2">
-                            <button onclick="checkAnswer('${cardId}', '${scenario.id}')" class="flex-1 bg-slate-800 text-white py-2.5 sm:py-2 rounded-lg font-medium hover:bg-slate-700 active:scale-95 transition shadow-md text-sm sm:text-base focus:ring-2 focus:ring-slate-400" aria-label="ประมวลผลตรวจคำตอบ">
-                                <i class="fa-solid fa-terminal mr-2 text-emerald-400" aria-hidden="true"></i>ตรวจคำตอบ
-                            </button>
-                            <button onclick="clearQuizCard('${cardId}')" class="bg-slate-200 text-slate-700 px-4 py-2.5 sm:py-2 rounded-lg font-medium hover:bg-slate-300 active:scale-95 transition shadow-sm text-sm sm:text-base focus:ring-2 focus:ring-slate-400" aria-label="ล้างข้อมูล">
-                                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Result Area -->
-                    <div id="result-${cardId}" class="hidden mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-100" aria-live="polite" aria-atomic="true"></div>
-                </div>
-            </div>
-            `;
-        }
-
-        // Store current scenarios in memory
-        let currentScenarios = {};
-
-        function setupGroupQuiz() {
-            showSection('group-quiz');
-            const container = document.getElementById('group-quiz-container');
-            container.innerHTML = '';
-            currentScenarios = {};
-
-            const scenarios = getRandomScenarios(4);
-
-            scenarios.forEach((sc, idx) => {
-                const key = `group-${idx}`;
-                currentScenarios[key] = sc;
-                container.innerHTML += createQuizCardHTML(sc, idx, false);
-            });
-            typesetMath();
-        }
-
-        function setupSoloQuiz() {
-            showSection('solo-quiz');
-            const container = document.getElementById('solo-quiz-container');
-            container.innerHTML = '';
-            currentScenarios = {};
-
-            const sc = getRandomScenarios(1)[0];
-            const key = `solo-0`;
-            currentScenarios[key] = sc;
-            container.innerHTML = createQuizCardHTML(sc, 0, true);
-            typesetMath();
-        }
-
-        function updateQuestionText(cardId, scenarioId) {
-            const val = document.getElementById(`input-n-${cardId}`).value;
-            const scenario = currentScenarios[cardId];
-
-            if (val && scenario) {
-                document.getElementById(`desc-${cardId}`).innerHTML = formatDesc(scenario.desc, val);
-                typesetMath(document.getElementById(`desc-${cardId}`));
-
-                const visualEl = document.getElementById(`visual-${cardId}`);
-                if (visualEl && scenario.visual) {
-                    visualEl.innerHTML = formatDesc(scenario.visual, val);
-                }
-            }
-        }
-
-        function clearQuizCard(cardId) {
-            document.getElementById(`input-n-${cardId}`).value = '';
-            document.getElementById(`input-ans-${cardId}`).value = '';
-
-            const scenario = currentScenarios[cardId];
-            if (scenario) {
-                document.getElementById(`desc-${cardId}`).innerHTML = formatDesc(scenario.desc, null);
-                typesetMath(document.getElementById(`desc-${cardId}`));
-
-                const visualEl = document.getElementById(`visual-${cardId}`);
-                if (visualEl && scenario.visual) {
-                    visualEl.innerHTML = formatDesc(scenario.visual, null);
-                }
-            }
-
-            const resultDiv = document.getElementById(`result-${cardId}`);
-            resultDiv.classList.add('hidden');
-            resultDiv.innerHTML = '';
-
-            document.getElementById(`input-n-${cardId}`).focus();
-        }
-
-        function checkAnswer(cardId, scenarioId) {
-            const nVal = parseFloat(document.getElementById(`input-n-${cardId}`).value);
-            const userAns = parseFloat(document.getElementById(`input-ans-${cardId}`).value);
-            const resultDiv = document.getElementById(`result-${cardId}`);
-            const scenario = currentScenarios[cardId];
-            const cardElement = document.getElementById(`card-${cardId}`);
-
-            if (isNaN(nVal) || isNaN(userAns)) {
-                alert("กรุณากรอกตัวเลขค่า N และคำตอบให้ครบถ้วนก่อนทำการตรวจคำตอบ");
-                return;
-            }
-
-            // Calculate Correct Answer
-            const correctAns = scenario.solve(nVal);
-            const diff = Math.abs(correctAns - userAns);
-            const isCorrect = diff <= 0.05;
-
-            // Add visual feedback to card
-            if (isCorrect) {
-                cardElement.classList.add('result-correct');
-                setTimeout(() => cardElement.classList.remove('result-correct'), 600);
-            } else {
-                cardElement.classList.add('result-incorrect');
-                setTimeout(() => cardElement.classList.remove('result-incorrect'), 500);
-            }
-
-            // HTML for Result
-            let html = '';
-            if (isCorrect) {
-                html = `
-                    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-400 rounded-lg p-3 sm:p-4 text-center result-correct shadow-lg">
-                        <div class="result-icon">
-                            <i class="fa-solid fa-circle-check text-emerald-500 text-3xl sm:text-4xl mb-2 animate-bounce"></i>
-                        </div>
-                        <h4 class="text-emerald-800 font-bold text-base sm:text-lg mb-1">🎉 ถูกต้องเยี่ยมมาก! อัลกอริทึมทำงานสมบูรณ์ 🎉</h4>
-                        <p class="text-xs sm:text-sm text-emerald-700 mt-1">คำตอบที่ถูกต้องคือ <strong>${correctAns.toFixed(2)}</strong> ${scenario.ansUnit}</p>
-                    </div>
-                `;
-            } else {
-                html = `
-                    <div class="bg-gradient-to-br from-rose-50 to-red-50 border-2 border-rose-300 rounded-lg p-3 sm:p-4 text-center result-incorrect shadow-lg">
-                        <div class="result-icon">
-                            <i class="fa-solid fa-circle-xmark text-rose-500 text-3xl sm:text-4xl mb-2"></i>
-                        </div>
-                        <h4 class="text-rose-800 font-bold text-base sm:text-lg mb-1">❌ คำตอบยังไม่ถูกต้อง ลองวิเคราะห์ใหม่อีกครั้งนะ</h4>
-                        <p class="text-xs sm:text-sm text-rose-700">คำตอบที่ถูกต้องคือ <strong>${correctAns.toFixed(2)}</strong> ${scenario.ansUnit}</p>
-                        <p class="text-xs text-slate-500 mt-1">คำตอบของคุณ: <strong>${userAns.toFixed(2)}</strong></p>
-                    </div>
-                `;
-            }
-
-            // Show Solution Logic
-            html += `
-                <div class="mt-3 sm:mt-4 bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200 text-left text-xs sm:text-sm">
-                    <p class="font-bold text-slate-700 mb-2"><i class="fa-solid fa-code mr-1 text-emerald-600" aria-hidden="true"></i>ขั้นตอนการคิดคำนวณเชิงการประมวลผล:</p>
-                    <p class="text-slate-600 mb-2">แทนค่าตัวแปร N = <strong>${nVal}</strong> ลงในแบบจำลอง:</p>
-                    <div class="text-slate-800 bg-white p-3 rounded-lg border-2 border-slate-200 text-center text-sm sm:text-base md:text-lg my-3 overflow-x-auto mathjax-loading">
-                        ${scenario.formula}
-                    </div>
-                    <p class="text-slate-600 text-center text-xs sm:text-sm mt-2">คำนวณผลลัพธ์ได้ ≈ <strong class="text-emerald-600 text-base">${correctAns.toFixed(2)}</strong> ${scenario.ansUnit}</p>
-                </div>
-            `;
-
-            resultDiv.innerHTML = html;
-            resultDiv.classList.remove('hidden');
-
-            setTimeout(() => {
-                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
-
-            const formulaDiv = resultDiv.querySelector('.mathjax-loading');
-            if (formulaDiv) {
-                typesetMath(formulaDiv);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.MathJax) {
-                MathJax.config = {
-                    ...MathJax.config,
-                    'HTML-CSS': {
-                        ...MathJax.config['HTML-CSS'],
-                        linebreaks: { automatic: true, width: 'container' }
-                    },
-                    'SVG': {
-                        ...MathJax.config['SVG'],
-                        linebreaks: { automatic: true, width: 'container' }
-                    }
-                };
-            }
-            typesetMath();
-        });
-    </script>
+<body>
+<div id="toast" class="toast"></div>
+<div id="app"></div>
+
+<script>
+const SUPABASE_URL = "https://fgpuhmqcpmtugyczulop.supabase.co";
+const SUPABASE_KEY = "sb_publishable_4gpKvuaXsD82NpG4j6cv8A_MQlkS31U";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const state = { role:null, student:null, page:"home", cache:{students:[],trips:[],leaves:[]} };
+
+const $ = id => document.getElementById(id);
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function toast(msg,ok=true){const t=$("toast");t.textContent=msg;t.style.background=ok?"#0f172a":"#991b1b";t.style.display="block";setTimeout(()=>t.style.display="none",2800)}
+function fmtDate(v){return v?new Intl.DateTimeFormat("th-TH",{dateStyle:"medium"}).format(new Date(v)):"-"}
+function fmtDT(v){return v?new Intl.DateTimeFormat("th-TH",{dateStyle:"medium",timeStyle:"short"}).format(new Date(v)):"-"}
+function today(){return new Date().toISOString().slice(0,10)}
+function publicUrl(bucket,path){return path?sb.storage.from(bucket).getPublicUrl(path).data.publicUrl:""}
+function statusPill(s){
+  const c=s==="อนุมัติ"||s==="กลับเข้าหอ"||s==="กลับแล้ว"?"p-ok":s==="ไม่อนุมัติ"||s==="ยกเลิก"||s==="ยังไม่กลับ"?"p-bad":"p-warn";
+  return '<span class="pill '+c+'">'+esc(s)+'</span>';
+}
+function logoHtml(cls="logo"){
+ return '<img class="'+cls+'" src="school-logo.png" alt="โลโก้โรงเรียน" onerror="this.onerror=null;this.src=\\'favicon.svg\\'">';
+}
+function shell(title,subtitle){
+ return '<div class="topbar"><div class="topbar-in"><div class="brand">'+logoHtml()+'<div><h1>'+esc(title)+'</h1><p>'+esc(subtitle)+'</p></div></div><div class="top-actions"><button class="ghost" onclick="goHome()">หน้าแรก</button></div></div></div><main class="main" id="content"></main>'+nav();
+}
+function nav(){
+ if(!state.role)return "";
+ const items=state.role==="นักเรียน"?[
+   ["home","🏠","หน้าแรก"],["trip","🏡","กลับบ้าน"],["leave","📝","พัก/ลา"],["history","🕘","ประวัติ"]
+ ]:state.role==="ผู้ปกครอง"?[
+   ["home","🏠","หน้าแรก"],["status","📍","สถานะ"],["history","🕘","ประวัติ"]
+ ]:[
+   ["home","🏠","ภาพรวม"],["trips","🏡","กลับบ้าน"],["leaves","📝","พัก/ลา"],["students","👥","นักเรียน"]
+ ];
+ return '<div class="nav"><div class="nav-in">'+items.map(x=>'<button class="'+(state.page===x[0]?"active":"")+'" onclick="route(\\''+x[0]+'\\')"><div style="font-size:18px">'+x[1]+'</div>'+x[2]+'</button>').join("")+'</div></div>'
+}
+async function queryAll(){
+ const [st,tr,lr]=await Promise.all([
+  sb.from("students").select("*").eq("active",true).order("level").order("room").order("student_code"),
+  sb.from("home_trips").select("*,students(id,student_code,full_name,level,room,photo_path)").order("leave_at",{ascending:false}).limit(300),
+  sb.from("leave_requests").select("*,students(id,student_code,full_name,level,room,photo_path)").order("created_at",{ascending:false}).limit(300)
+ ]);
+ if(st.error) throw st.error;if(tr.error) throw tr.error;if(lr.error) throw lr.error;
+ state.cache={students:st.data||[],trips:tr.data||[],leaves:lr.data||[]}; return state.cache;
+}
+async function getStudentByCode(code){
+ const {data,error}=await sb.from("students").select("*").eq("student_code",code).eq("active",true).maybeSingle(); if(error)throw error; return data;
+}
+function start(){
+ state.role=null; state.page="home"; renderRole();
+}
+function renderRole(){
+ $("app").innerHTML='<main class="main"><div class="login-box"><div class="center">'+logoHtml("logo")+"<h2 style='margin:12px 0 5px'>Homecoming</h2><p class='muted'>ระบบจัดการการกลับบ้าน การพัก/ลา และการกลับเข้าหอพักนักเรียน</p></div><div class='notice' style='margin:18px 0'>เลือกประเภทผู้ใช้งานเพื่อเข้าสู่เมนูที่เกี่ยวข้อง ระบบรุ่นนี้ยังไม่บังคับรหัสผ่าน</div><div class='grid' style='grid-template-columns:repeat(2,1fr)'>"+[
+ ["นักเรียน","🎓","บันทึกกลับบ้าน / กลับเข้าหอ / แจ้งพัก-ลา"],
+ ["ผู้ปกครอง","👨‍👩‍👧","ติดตามสถานะและประวัติของนักเรียน"],
+ ["ครู","👩‍🏫","ตรวจสอบรายการ อนุมัติพัก-ลา และดูนักเรียน"],
+ ["ผู้บริหาร","📊","ภาพรวมสถิติ รายงาน และข้อมูลทั้งระบบ"]
+ ].map(x=>'<button class="role" onclick="chooseRole(\\''+x[0]+'\\')"><div class="ico">'+x[1]+'</div><strong>'+x[0]+'</strong><span>'+x[2]+'</span></button>').join("")+"</div><p class='muted center' style='margin-top:20px'>โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ</p></div></main>";
+}
+function chooseRole(role){
+ state.role=role;
+ if(role==="นักเรียน"||role==="ผู้ปกครอง"){ renderIdentity(); }
+ else { state.page="home"; render(); }
+}
+function renderIdentity(){
+ $("app").innerHTML='<main class="main"><div class="login-box"><div class="student-head">'+logoHtml("student-avatar")+'<div><div class="muted">เข้าสู่ระบบแบบเลือกนักเรียน</div><div class="badge-big">'+esc(state.role)+'</div></div></div><div class="form" style="margin-top:18px"><label>รหัสนักเรียน</label><input id="identityCode" placeholder="เช่น STD-001" autocomplete="off"><button class="btn" onclick="identitySubmit()">เข้าสู่ระบบ</button><button class="btn light" onclick="start()">← เปลี่ยนประเภทผู้ใช้งาน</button></div><div class="notice" style="margin-top:14px">ใช้รหัสนักเรียนเพื่อเปิดข้อมูลของนักเรียนคนนั้น ระบบนี้เป็นเวอร์ชันใช้งานภายในและยังไม่ได้เปิด Auth/PIN</div></div></main>';
+ $("identityCode").focus();
+}
+async function identitySubmit(){
+ try{const s=await getStudentByCode($("identityCode").value.trim()); if(!s)return toast("ไม่พบรหัสนักเรียน",false); state.student=s; state.page="home"; render();}catch(e){toast("เชื่อมต่อข้อมูลไม่สำเร็จ: "+e.message,false)}
+}
+function goHome(){state.page="home";render()}
+async function render(){
+ try{
+  if(!state.cache.students.length) await queryAll();
+  let title=state.role==="นักเรียน"?"Homecoming · นักเรียน":state.role==="ผู้ปกครอง"?"Homecoming · ผู้ปกครอง":"Homecoming · "+state.role;
+  $("app").innerHTML=shell(title,"โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ");
+  if(state.role==="นักเรียน") renderStudent(); else if(state.role==="ผู้ปกครอง") renderParent(); else renderStaff();
+ }catch(e){$("app").innerHTML='<main class="main"><div class="card"><b>โหลดข้อมูลไม่สำเร็จ</b><p class="muted">'+esc(e.message)+'</p><button class="btn" onclick="render()">ลองใหม่</button></div></main>'}
+}
+function renderStudent(){
+ const s=state.student; const trips=state.cache.trips.filter(x=>x.student_id===s.id); const leaves=state.cache.leaves.filter(x=>x.student_id===s.id);
+ if(state.page==="home"){
+  const latest=trips[0]; const pending=leaves.find(x=>x.status==="รอตรวจสอบ");
+  $("content").innerHTML='<div class="hero"><div class="hero-row"><div><p style="color:#bae6fd">ยินดีต้อนรับ</p><h2>'+esc(s.full_name)+'</h2><p>ชั้น '+esc(s.level)+' · ห้อง '+esc(s.room)+' · '+esc(s.student_code)+'</p></div><div>'+statusPill(latest?(latest.return_at?"กลับเข้าหอแล้ว":"ยังไม่กลับ"):"ยังไม่มีรายการวันนี้")+'</div></div></div><div class="section-title"><h3>เมนูด่วน</h3></div><div class="grid quick"><button onclick="route(\\'trip\\')">🏡<b>แจ้งกลับบ้าน</b><span class="muted">บันทึกเวลาออกจากหอ</span></button><button onclick="returnForm()">↩️<b>กลับเข้าหอ</b><span class="muted">บันทึกเวลากลับและรูปถ่าย</span></button><button onclick="route(\\'leave\\')">📝<b>แจ้งพัก / ลา</b><span class="muted">'+(pending?"มีรายการรอตรวจสอบ":"ส่งคำขอให้ครูตรวจ")+'</span></button><button onclick="route(\\'history\\')">🕘<b>ดูประวัติ</b><span class="muted">'+trips.length+' รายการกลับบ้าน · '+leaves.length+' รายการพัก/ลา</span></button></div><div class="section-title"><h3>สถานะล่าสุด</h3></div><div class="card"><div class="student-head">'+photoForStudent(s) + '<div><div class="badge-big">'+esc(s.full_name)+'</div><div class="muted">'+esc(s.level)+' / ห้อง '+esc(s.room)+'</div></div></div><div class="notice" style="margin-top:14px">'+(latest?"รายการล่าสุด: "+fmtDT(latest.leave_at)+" · "+(latest.return_at?"กลับ "+fmtDT(latest.return_at):"ยังไม่บันทึกการกลับเข้าหอ"):"ยังไม่มีรายการกลับบ้าน")+'</div></div>';
+ } else if(state.page==="trip") renderTripStudent(trips);
+ else if(state.page==="leave") renderLeaveStudent(leaves);
+ else renderHistoryStudent(trips,leaves);
+}
+function photoForStudent(s){return s.photo_path?'<img class="student-avatar" src="'+esc(publicUrl("student-photos",s.photo_path))+'" alt="">':'<div class="student-avatar" style="display:grid;place-items:center;font-size:30px">🎓</div>'}
+function renderTripStudent(trips){
+ const open=trips.find(x=>x.home_date===today()&&!x.return_at);
+ $("content").innerHTML='<div class="section-title"><h3>🏡 กลับบ้านวันนี้</h3><button class="ghost" onclick="goHome()">← กลับ</button></div><div class="card"><div class="notice">เมื่อกด “บันทึกออกจากหอ” ระบบจะเก็บวันที่และเวลาอัตโนมัติ</div><div style="margin-top:14px">'+(open?'<span>'+statusPill("ยังไม่กลับ")+'</span><p class="muted">ออกจากหอเมื่อ '+fmtDT(open.leave_at)+'</p><button class="btn ok" onclick="returnForm()">↩️ บันทึกกลับเข้าหอ</button>':'<button class="btn" onclick="createTrip()">🏡 ฉันกำลังกลับบ้าน</button>')+'</div></div><div class="section-title"><h3>รายการล่าสุด</h3></div>'+renderTripList(trips.slice(0,10))}
+function renderTripList(trips){
+ if(!trips.length)return '<div class="card empty">ยังไม่มีรายการ</div>';
+ return '<div class="list">'+trips.map(t=>'<div class="list-item"><div class="list-main"><div><b>'+fmtDate(t.home_date)+'</b><div class="muted">ออก '+fmtDT(t.leave_at)+'</div></div>'+statusPill(t.return_at?"กลับแล้ว":"ยังไม่กลับ")+'</div><div class="muted" style="margin-top:8px">'+(t.return_at?"กลับ "+fmtDT(t.return_at):"ยังไม่มีเวลาบันทึกกลับ")+'</div></div>').join("")+'</div>';
+}
+async function createTrip(){
+ try{
+  const exists=state.cache.trips.find(x=>x.student_id===state.student.id&&x.home_date===today()&&!x.return_at);
+  if(exists)return toast("วันนี้มีรายการกลับบ้านอยู่แล้ว",false);
+  const {data,error}=await sb.from("home_trips").insert({student_id:state.student.id,home_date:today(),leave_at:new Date().toISOString()}).select().single(); if(error)throw error;
+  state.cache.trips.unshift({...data,students:state.student}); toast("บันทึกการกลับบ้านแล้ว"); render();
+ }catch(e){toast("บันทึกไม่สำเร็จ: "+e.message,false)}
+}
+function returnForm(){
+ const t=state.cache.trips.find(x=>x.student_id===state.student.id&&x.home_date===today()&&!x.return_at);
+ if(!t)return toast("ไม่พบรายการกลับบ้านที่ยังไม่กลับ",false);
+ $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="returnModal"><div class="modal-box"><div class="modal-head"><h3>↩️ กลับเข้าหอ</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="notice" style="margin:12px 0">เลือกภาพจากกล้อง/คลังภาพได้ ระบบจะบันทึกเวลาและภาพแนบกับรายการนี้</div><input type="file" id="returnPhoto" accept="image/*" capture="environment"><div style="margin-top:14px"><button class="btn ok" onclick="saveReturn(\\''+t.id+'\\')">บันทึกกลับเข้าหอ</button></div></div></div>');
+}
+function closeModal(){document.querySelectorAll(".modal").forEach(x=>x.remove())}
+async function upload(file,bucket,prefix){
+ if(!file)return null;
+ const ext=(file.name.split(".").pop()||"jpg").toLowerCase(); const path=prefix+"/"+crypto.randomUUID()+"."+ext;
+ const {error}=await sb.storage.from(bucket).upload(path,file,{upsert:false,contentType:file.type||"image/jpeg"}); if(error)throw error; return path;
+}
+async function saveReturn(id){
+ try{
+  const file=$("returnPhoto").files[0]; let path=null; if(file)path=await upload(file,"trip-photos",state.student.student_code||state.student.id);
+  const patch={return_at:new Date().toISOString()}; if(path)patch.return_photo_path=path;
+  const {data,error}=await sb.from("home_trips").update(patch).eq("id",id).select().single(); if(error)throw error;
+  const idx=state.cache.trips.findIndex(x=>x.id===id); if(idx>=0)state.cache.trips[idx]={...state.cache.trips[idx],...data}; closeModal(); toast("บันทึกกลับเข้าหอแล้ว"); render();
+ }catch(e){toast("บันทึกกลับเข้าหอไม่สำเร็จ: "+e.message,false)}
+}
+function renderLeaveStudent(leaves){
+ $("content").innerHTML='<div class="section-title"><h3>📝 แจ้งพัก / ลา</h3><button class="ghost" onclick="goHome()">← กลับ</button></div><div class="card"><div class="form two"><div><label>ประเภท</label><select id="leaveType"><option value="พัก">พัก</option><option value="ลา">ลา</option></select></div><div><label>เริ่มวันที่/เวลา</label><input type="datetime-local" id="leaveStart"></div><div><label>คาดว่าจะกลับ</label><input type="datetime-local" id="leaveReturn"></div><div><label>เบอร์ติดต่อ</label><input id="leavePhone" inputmode="tel" placeholder="เบอร์โทร"></div><div><label>จุดหมาย</label><input id="leaveDest" placeholder="บ้าน / โรงพยาบาล / อื่นๆ"></div><div style="grid-column:1/-1"><label>เหตุผล</label><textarea id="leaveReason" placeholder="ระบุเหตุผล"></textarea></div></div><div style="margin-top:14px"><button class="btn" onclick="submitLeave()">ส่งคำขอ</button></div></div><div class="section-title"><h3>ประวัติคำขอ</h3></div>'+renderLeaves(leaves)}
+function renderLeaves(leaves){
+ if(!leaves.length)return '<div class="card empty">ยังไม่มีคำขอ</div>';
+ return '<div class="list">'+leaves.slice(0,15).map(x=>'<div class="list-item"><div class="list-main"><div><b>'+esc(x.leave_type)+'</b><div class="muted">'+fmtDT(x.start_at)+' → '+fmtDT(x.expected_return_at)+'</div></div>'+statusPill(x.status)+'</div><div class="muted" style="margin-top:7px">เหตุผล: '+esc(x.reason||"-")+(x.teacher_note?' · ครู: '+esc(x.teacher_note):"")+'</div></div>').join("")+'</div>';
+}
+async function submitLeave(){
+ try{
+  const start=$("leaveStart").value; if(!start)return toast("กรุณาระบุวันเวลาเริ่ม",false);
+  const payload={student_id:state.student.id,leave_type:$("leaveType").value,start_at:new Date(start).toISOString(),expected_return_at:$("leaveReturn").value?new Date($("leaveReturn").value).toISOString():null,reason:$("leaveReason").value.trim(),destination:$("leaveDest").value.trim(),contact_phone:$("leavePhone").value.trim()};
+  const {data,error}=await sb.from("leave_requests").insert(payload).select().single(); if(error)throw error;
+  state.cache.leaves.unshift({...data,students:state.student}); toast("ส่งคำขอพัก/ลาแล้ว"); render();
+ }catch(e){toast("ส่งคำขอไม่สำเร็จ: "+e.message,false)}
+}
+function renderHistoryStudent(trips,leaves){
+ $("content").innerHTML='<div class="section-title"><h3>🕘 ประวัติของฉัน</h3><button class="ghost" onclick="goHome()">← กลับ</button></div><div class="section-title"><h3>กลับบ้าน</h3></div>'+renderTripList(trips.slice(0,30))+'<div class="section-title"><h3>พัก / ลา</h3></div>'+renderLeaves(leaves.slice(0,30));
+}
+function renderParent(){
+ if(state.page==="home"||state.page==="status"){
+  const s=state.student; const trips=state.cache.trips.filter(x=>x.student_id===s.id); const leaves=state.cache.leaves.filter(x=>x.student_id===s.id); const t=trips[0]; const l=leaves[0];
+  $("content").innerHTML='<div class="hero"><div class="hero-row"><div><p style="color:#bae6fd">ข้อมูลนักเรียน</p><h2>'+esc(s.full_name)+'</h2><p>'+esc(s.student_code)+' · '+esc(s.level)+' · ห้อง '+esc(s.room)+'</p></div><div>'+statusPill(t?(t.return_at?"กลับเข้าหอแล้ว":"อยู่นอกหอ"):"ยังไม่มีรายการ")+'</div></div></div><div class="section-title"><h3>สถานะล่าสุด</h3></div><div class="grid cards"><div class="card stat"><div class="ico">🏡</div><div><b>'+ (t&&!t.return_at?"ออกแล้ว":"-")+'</b><small>สถานะกลับบ้าน</small></div></div><div class="card stat"><div class="ico">🕘</div><div><b style="font-size:18px">'+esc(t?fmtDT(t.leave_at):"-")+'</b><small>เวลาออกจากหอ</small></div></div><div class="card stat"><div class="ico">↩️</div><div><b style="font-size:18px">'+esc(t&&t.return_at?fmtDT(t.return_at):"-")+'</b><small>เวลากลับเข้าหอ</small></div></div><div class="card stat"><div class="ico">📝</div><div><b style="font-size:18px">'+esc(l?l.status:"-")+'</b><small>คำขอพัก/ลา</small></div></div></div><div class="section-title"><h3>ประวัติ</h3><button class="ghost" onclick="route(\\'history\\')">ดูทั้งหมด</button></div><div class="card">'+renderTripList(trips.slice(0,5))+'</div>';
+ } else {
+  const trips=state.cache.trips.filter(x=>x.student_id===state.student.id), leaves=state.cache.leaves.filter(x=>x.student_id===state.student.id);
+  $("content").innerHTML='<div class="section-title"><h3>🕘 ประวัติ</h3><button class="ghost" onclick="route(\\'home\\')">← กลับ</button></div>'+renderTripList(trips)+'<div class="section-title"><h3>พัก / ลา</h3></div>'+renderLeaves(leaves);
+ }
+}
+async function renderStaff(){
+ if(state.role==="ผู้บริหาร"){ renderExecutive(); return; }
+ if(state.page==="home")renderStaffHome(); else if(state.page==="trips")renderStaffTrips(); else if(state.page==="leaves")renderStaffLeaves(); else renderStudents();
+}
+function renderStaffHome(){
+ const st=state.cache.students, tr=state.cache.trips, lr=state.cache.leaves;
+ const todayTrips=tr.filter(x=>x.home_date===today()); const out=todayTrips.filter(x=>!x.return_at).length, returned=todayTrips.filter(x=>x.return_at).length, pending=lr.filter(x=>x.status==="รอตรวจสอบ").length;
+ $("content").innerHTML='<div class="hero"><div class="hero-row"><div><p style="color:#bae6fd">'+esc(state.role)+'</p><h2>ภาพรวมวันนี้</h2><p>'+fmtDate(new Date())+' · ติดตามการกลับบ้านและการพัก/ลาแบบรวมศูนย์</p></div><div class="pill p-blue">'+st.length+' คน</div></div></div><div class="section-title"><h3>สรุปสถานะ</h3></div><div class="grid cards"><div class="card stat"><div class="ico">👥</div><div><b>'+st.length+'</b><small>นักเรียนที่ใช้งาน</small></div></div><div class="card stat"><div class="ico">🏡</div><div><b>'+todayTrips.length+'</b><small>กลับบ้านวันนี้</small></div></div><div class="card stat"><div class="ico">✅</div><div><b>'+returned+'</b><small>กลับเข้าหอแล้ว</small></div></div><div class="card stat"><div class="ico">⚠️</div><div><b>'+out+'</b><small>ยังไม่กลับ / รอตรวจ '+pending+'</small></div></div></div><div class="section-title"><h3>เมนูด่วน</h3></div><div class="grid quick"><button onclick="route(\\'trips\\')">🏡<b>รายการกลับบ้าน</b><span class="muted">ดูและบันทึกการกลับ</span></button><button onclick="route(\\'leaves\\')">📝<b>ตรวจพัก / ลา</b><span class="muted">'+pending+' รายการรอตรวจ</span></button><button onclick="route(\\'students\\')">👥<b>จัดการนักเรียน</b><span class="muted">ค้นหาและดูข้อมูล</span></button><button onclick="exportCSV()">⬇️<b>ส่งออกรายงาน</b><span class="muted">CSV เปิดใน Excel ได้</span></button></div><div class="section-title"><h3>แจ้งเตือนล่าสุด</h3></div>'+renderAlerts(tr,lr);
+}
+function renderAlerts(tr,lr){
+ const arr=[...lr.filter(x=>x.status==="รอตรวจสอบ").slice(0,5).map(x=>({type:"leave",x})),...tr.filter(x=>x.home_date===today()&&!x.return_at).slice(0,5).map(x=>({type:"trip",x}))].slice(0,8);
+ if(!arr.length)return '<div class="card empty">ไม่มีรายการแจ้งเตือน</div>';
+ return '<div class="list">'+arr.map(a=>a.type==="leave"?'<div class="list-item"><div class="list-main"><div><b>📝 คำขอ'+esc(a.x.leave_type)+'</b><div class="muted">'+esc(a.x.students?.full_name||"-")+' · '+fmtDT(a.x.start_at)+'</div></div>'+statusPill(a.x.status)+'</div></div>':'<div class="list-item"><div class="list-main"><div><b>🏡 ยังไม่กลับเข้าหอ</b><div class="muted">'+esc(a.x.students?.full_name||"-")+' · ออก '+fmtDT(a.x.leave_at)+'</div></div>'+statusPill("ยังไม่กลับ")+'</div></div>').join("")+'</div>';
+}
+function renderStaffTrips(){
+ const rows=state.cache.trips.filter(x=>x.home_date===today());
+ $("content").innerHTML='<div class="section-title"><h3>🏡 การกลับบ้านวันนี้</h3><div class="toolbar"><button class="ghost" onclick="queryAll().then(render)">รีเฟรช</button><button class="btn light" onclick="exportCSV()">ส่งออก CSV</button></div></div><div class="card table-wrap"><table class="table"><thead><tr><th>นักเรียน</th><th>ชั้น/ห้อง</th><th>ออกจากหอ</th><th>กลับเข้าหอ</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+ (rows.length?rows.map(t=>'<tr><td><b>'+esc(t.students?.full_name||"-")+'</b><div class="muted">'+esc(t.students?.student_code||"")+'</div></td><td>'+esc(t.students?.level||"")+' / '+esc(t.students?.room||"")+'</td><td>'+fmtDT(t.leave_at)+'</td><td>'+fmtDT(t.return_at)+'</td><td>'+statusPill(t.return_at?"กลับแล้ว":"ยังไม่กลับ")+'</td><td><button class="btn light" onclick="staffReturn(\\''+t.id+'\\')">บันทึกกลับ</button> <button class="ghost" onclick="showTrip(\\''+t.id+'\\')">ดูรูป</button></td></tr>').join(""):'<tr><td colspan="6" class="center">ไม่มีข้อมูลวันนี้</td></tr>')+'</tbody></table></div>';
+}
+async function staffReturn(id){
+ try{const {data,error}=await sb.from("home_trips").update({return_at:new Date().toISOString()}).eq("id",id).select().single();if(error)throw error;const i=state.cache.trips.findIndex(x=>x.id===id);if(i>=0)state.cache.trips[i]={...state.cache.trips[i],...data};toast("บันทึกกลับเข้าหอแล้ว");render()}catch(e){toast("ทำรายการไม่สำเร็จ: "+e.message,false)}
+}
+function showTrip(id){
+ const t=state.cache.trips.find(x=>x.id===id); if(!t)return;
+ const a=t.leave_photo_path?'<img src="'+esc(publicUrl("trip-photos",t.leave_photo_path))+'" alt="รูปตอนออก">':'<div class="notice">ไม่มีรูปตอนออกจากหอ</div>';
+ const b=t.return_photo_path?'<img src="'+esc(publicUrl("trip-photos",t.return_photo_path))+'" alt="รูปตอนกลับ">':'<div class="notice">ไม่มีรูปตอนกลับเข้าหอ</div>';
+ $("app").insertAdjacentHTML("beforeend",'<div class="modal open"><div class="modal-box"><div class="modal-head"><h3>'+esc(t.students?.full_name||"รายการกลับบ้าน")+'</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><p class="muted">ออก '+fmtDT(t.leave_at)+' · กลับ '+fmtDT(t.return_at)+'</p><div class="photo-grid">'+a+b+'</div></div></div>');
+}
+function renderStaffLeaves(){
+ const rows=state.cache.leaves;
+ $("content").innerHTML='<div class="section-title"><h3>📝 ตรวจสอบพัก / ลา</h3><button class="ghost" onclick="queryAll().then(render)">รีเฟรช</button></div><div class="table-wrap"><table class="table"><thead><tr><th>นักเรียน</th><th>ประเภท</th><th>ช่วงเวลา</th><th>เหตุผล</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+ (rows.length?rows.map(x=>'<tr><td><b>'+esc(x.students?.full_name||"-")+'</b><div class="muted">'+esc(x.students?.student_code||"")+'</div></td><td>'+esc(x.leave_type)+'</td><td>'+fmtDT(x.start_at)+'<br>'+fmtDT(x.expected_return_at)+'</td><td>'+esc(x.reason||"-")+'</td><td>'+statusPill(x.status)+'</td><td>'+ (x.status==="รอตรวจสอบ"?'<button class="btn ok" onclick="reviewLeave(\\''+x.id+'\\',\\'อนุมัติ\\')">อนุมัติ</button> <button class="btn bad" onclick="reviewLeave(\\''+x.id+'\\',\\'ไม่อนุมัติ\\')">ไม่อนุมัติ</button>':'<button class="ghost" onclick="reviewLeave(\\''+x.id+'\\',\\'ดู\\')">ดูรายละเอียด</button>')+'</td></tr>').join(""):'<tr><td colspan="6" class="center">ยังไม่มีคำขอ</td></tr>')+'</tbody></table></div>';
+}
+function reviewLeave(id,action){
+ const x=state.cache.leaves.find(v=>v.id===id);if(!x)return;
+ if(action==="ดู"){alert("สถานะ: "+x.status+"\\nหมายเหตุครู: "+(x.teacher_note||"-"));return}
+ const note=prompt("บันทึกหมายเหตุถึงนักเรียน/ผู้ปกครอง (เว้นว่างได้)",""); if(note===null)return;
+ sb.from("leave_requests").update({status:action,teacher_note:note.trim()}).eq("id",id).select().single().then(({data,error})=>{
+  if(error)return toast("อัปเดตไม่สำเร็จ: "+error.message,false); Object.assign(x,data); toast("อัปเดตคำขอแล้ว"); render();
+ });
+}
+function renderStudents(){
+ const st=state.cache.students;
+ $("content").innerHTML='<div class="section-title"><h3>👥 นักเรียน</h3><button class="ghost" onclick="queryAll().then(render)">รีเฟรช</button></div><div class="card"><div class="form two"><input id="stuSearch" oninput="filterStudents()" placeholder="ค้นหาชื่อหรือรหัสนักเรียน"><select id="levelFilter" onchange="filterStudents()"><option value="">ทุกระดับชั้น</option>'+[...new Set(st.map(x=>x.level))].map(v=>'<option>'+esc(v)+'</option>').join("")+'</select></div></div><div class="card table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th>รูป</th><th>รหัส</th><th>ชื่อ-สกุล</th><th>ชั้น</th><th>ห้อง</th><th>จัดการ</th></tr></thead><tbody id="studentRows"></tbody></table></div>'; filterStudents();
+}
+function filterStudents(){
+ const q=($("stuSearch")?.value||"").trim().toLowerCase(), lv=$("levelFilter")?.value||"";
+ const rows=state.cache.students.filter(s=>(!q||(s.full_name+" "+s.student_code).toLowerCase().includes(q))&&(!lv||s.level===lv));
+ $("studentRows").innerHTML=rows.map(s=>'<tr><td>'+(s.photo_path?'<img class="thumb" src="'+esc(publicUrl("student-photos",s.photo_path))+'">':'🎓')+'</td><td>'+esc(s.student_code)+'</td><td><b>'+esc(s.full_name)+'</b></td><td>'+esc(s.level)+'</td><td>'+esc(s.room)+'</td><td><button class="ghost" onclick="viewStudent(\\''+s.id+'\\')">ดูข้อมูล</button></td></tr>').join("")||'<tr><td colspan="6" class="center">ไม่พบข้อมูล</td></tr>';
+}
+function viewStudent(id){
+ const s=state.cache.students.find(x=>x.id===id), trips=state.cache.trips.filter(x=>x.student_id===id).slice(0,10), leaves=state.cache.leaves.filter(x=>x.student_id===id).slice(0,10);
+ $("app").insertAdjacentHTML("beforeend",'<div class="modal open"><div class="modal-box"><div class="modal-head"><h3>ข้อมูลนักเรียน</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="student-head">'+photoForStudent(s)+'<div><div class="badge-big">'+esc(s.full_name)+'</div><div class="muted">'+esc(s.student_code)+' · '+esc(s.level)+' / ห้อง '+esc(s.room)+'</div></div></div><div class="section-title"><h3>กลับบ้านล่าสุด</h3></div>'+renderTripList(trips)+'<div class="section-title"><h3>พัก / ลา</h3></div>'+renderLeaves(leaves)+'</div></div>');
+}
+function renderExecutive(){
+ const st=state.cache.students,tr=state.cache.trips,lr=state.cache.leaves; const tp=tr.filter(x=>x.home_date===today()),out=tp.filter(x=>!x.return_at).length,ret=tp.filter(x=>x.return_at).length,p=lr.filter(x=>x.status==="รอตรวจสอบ").length;
+ $("content").innerHTML='<div class="hero"><div class="hero-row"><div><p style="color:#bae6fd">ผู้บริหาร</p><h2>รายงานภาพรวม Homecoming</h2><p>ข้อมูลปัจจุบันจากฐานข้อมูล Supabase</p></div><button class="btn light" onclick="exportCSV()">⬇️ Export CSV</button></div></div><div class="section-title"><h3>สถิติ</h3></div><div class="grid cards"><div class="card stat"><div class="ico">👥</div><div><b>'+st.length+'</b><small>นักเรียน</small></div></div><div class="card stat"><div class="ico">🏡</div><div><b>'+tp.length+'</b><small>กลับบ้านวันนี้</small></div></div><div class="card stat"><div class="ico">✅</div><div><b>'+ret+'</b><small>กลับเข้าหอแล้ว</small></div></div><div class="card stat"><div class="ico">⚠️</div><div><b>'+out+'</b><small>ยังไม่กลับ</small></div></div></div><div class="section-title"><h3>คำขอพัก / ลา</h3></div><div class="card"><b style="font-size:30px">'+p+'</b><div class="muted">รอตรวจสอบ</div></div><div class="section-title"><h3>การทำงาน</h3></div><div class="grid quick"><button onclick="route(\\'trips\\')">🏡<b>รายการกลับบ้าน</b></button><button onclick="route(\\'leaves\\')">📝<b>คำขอพัก/ลา</b></button><button onclick="route(\\'students\\')">👥<b>ข้อมูลนักเรียน</b></button><button onclick="exportCSV()">📊<b>รายงาน CSV</b></button></div>';
+}
+function exportCSV(){
+ const rows=[["วันที่","รหัสนักเรียน","ชื่อ-สกุล","ชั้น","ห้อง","ออกจากหอ","กลับเข้าหอ","สถานะ"]];
+ state.cache.trips.forEach(t=>rows.push([t.home_date,t.students?.student_code||"",t.students?.full_name||"",t.students?.level||"",t.students?.room||"",t.leave_at||"",t.return_at||"",t.return_at?"กลับแล้ว":"ยังไม่กลับ"]));
+ const csv="\\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="homecoming-report-"+today()+".csv";a.click();URL.revokeObjectURL(a.href);toast("ส่งออกรายงานแล้ว");
+}
+function route(p){state.page=p;render()}
+window.addEventListener("error",e=>console.error(e));
+start();
+</script>
 </body>
-
 </html>
