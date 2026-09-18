@@ -35,7 +35,7 @@ function statusPill(s){
   return '<span class="pill '+c+'">'+esc(s)+'</span>';
 }
 function logoHtml(cls="logo"){
- return '<img class="'+cls+'" src="school-logo.png" alt="โลโก้โรงเรียน" onerror="this.onerror=null;this.src=\\'favicon.svg\\'">';
+ return '<img class="'+cls+'" src="https://hongson.ac.th/hsweb/wp-content/uploads/2024/07/image.png" alt="โลโก้โรงเรียน" onerror="this.onerror=null;this.src=\\'favicon.svg\\'">';
 }
 function shell(title,subtitle){
  return '<div class="topbar"><div class="topbar-in"><div class="brand">'+logoHtml()+'<div><h1>'+esc(title)+'</h1><p>'+esc(subtitle)+'</p></div></div><div class="top-actions"><button class="ghost" onclick="goHome()">หน้าแรก</button></div></div></div><main class="main" id="content"></main>'+nav();
@@ -112,12 +112,23 @@ function renderTripList(trips){
  if(!trips.length)return '<div class="card empty">ยังไม่มีรายการ</div>';
  return '<div class="list">'+trips.map(t=>'<div class="list-item"><div class="list-main"><div><b>'+fmtDate(t.home_date)+'</b><div class="muted">ออก '+fmtDT(t.leave_at)+'</div></div>'+statusPill(t.return_at?"กลับแล้ว":"ยังไม่กลับ")+'</div><div class="muted" style="margin-top:8px">'+(t.return_at?"กลับ "+fmtDT(t.return_at):"ยังไม่มีเวลาบันทึกกลับ")+'</div></div>').join("")+'</div>';
 }
+function leaveHomeForm(){
+ const exists=state.cache.trips.find(x=>x.student_id===state.student.id&&x.home_date===today()&&!x.return_at);
+ if(exists)return toast("วันนี้มีรายการกลับบ้านอยู่แล้ว",false);
+ $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="leaveHomeModal"><div class="modal-box"><div class="modal-head"><h3>🏡 แจ้งกลับบ้าน</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="notice" style="margin:12px 0">ระบบจะบันทึกวันที่และเวลาออกจากหออัตโนมัติ และสามารถแนบภาพจากกล้องได้</div><input type="file" id="leavePhoto" accept="image/*" capture="environment"><div style="margin-top:14px"><button class="btn" onclick="createTrip()">บันทึกออกจากหอ</button></div></div></div>');
+}
 async function createTrip(){
  try{
   const exists=state.cache.trips.find(x=>x.student_id===state.student.id&&x.home_date===today()&&!x.return_at);
-  if(exists)return toast("วันนี้มีรายการกลับบ้านอยู่แล้ว",false);
-  const {data,error}=await sb.from("home_trips").insert({student_id:state.student.id,home_date:today(),leave_at:new Date().toISOString()}).select().single(); if(error)throw error;
-  state.cache.trips.unshift({...data,students:state.student}); toast("บันทึกการกลับบ้านแล้ว"); render();
+  if(exists){closeModal();return toast("วันนี้มีรายการกลับบ้านอยู่แล้ว",false);}
+  const file=$("leavePhoto")?.files[0]; let path=null;
+  if(file) path=await upload(file,"trip-photos",state.student.student_code||state.student.id);
+  const payload={student_id:state.student.id,home_date:today(),leave_at:new Date().toISOString()};
+  if(path) payload.leave_photo_path=path;
+  const {data,error}=await sb.from("home_trips").insert(payload).select().single();
+  if(error)throw error;
+  state.cache.trips.unshift({...data,students:state.student});
+  closeModal(); toast("บันทึกการออกจากหอแล้ว"); render();
  }catch(e){toast("บันทึกไม่สำเร็จ: "+e.message,false)}
 }
 function returnForm(){
