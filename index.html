@@ -38,16 +38,16 @@ function logoHtml(cls="logo"){
  return '<img class="'+cls+'" src="https://hongson.ac.th/hsweb/wp-content/uploads/2024/07/image.png" alt="โลโก้โรงเรียน" onerror="this.onerror=null;this.src=\'favicon.svg\'">';
 }
 function shell(title,subtitle){
- return '<div class="topbar"><div class="topbar-in"><div class="brand">'+logoHtml()+'<div><h1>'+esc(title)+'</h1><p>'+esc(subtitle)+'</p></div></div><div class="top-actions"><button class="ghost" onclick="goHome()">หน้าแรก</button></div></div></div><main class="main" id="content"></main>'+nav();
+ return '<div class="topbar"><div class="topbar-in"><div class="brand">'+logoHtml()+'<div><h1>'+esc(title)+'</h1><p>'+esc(subtitle)+'</p></div></div><div class="top-actions"><button class="ghost" onclick="goHome()">← หน้าหลัก</button></div></div></div><main class="main" id="content"></main>'+nav();
 }
 function nav(){
  if(!state.role)return "";
  const items=state.role==="นักเรียน"?[
-   ["home","🏠","หน้าแรก"],["trip","🏡","กลับบ้าน"],["leave","📝","พัก/ลา"],["history","🕘","ประวัติ"]
+   ["home","🏠","หน้าหลัก"],["trip","🏡","กลับบ้าน"],["leave","📝","พัก/ลา"],["history","🕘","ประวัติ"]
  ]:state.role==="ผู้ปกครอง"?[
    ["home","🏠","หน้าแรก"],["status","📍","สถานะ"],["history","🕘","ประวัติ"]
  ]:[
-   ["home","🏠","ภาพรวม"],["trips","🏡","กลับบ้าน"],["leaves","📝","พัก/ลา"],["students","👥","นักเรียน"]
+   ["home","🏠","หน้าหลัก"],["trips","🏡","กลับบ้าน"],["leaves","📝","พัก/ลา"],["students","👥","นักเรียน"]
  ];
  return '<div class="nav"><div class="nav-in">'+items.map(x=>'<button class="'+(state.page===x[0]?"active":"")+'" onclick="route(\''+x[0]+'\')"><div style="font-size:18px">'+x[1]+'</div>'+x[2]+'</button>').join("")+'</div></div>'
 }
@@ -76,7 +76,8 @@ function renderRole(){
 }
 function chooseRole(role){
  state.role=role;
- if(role==="นักเรียน"||role==="ผู้ปกครอง"){ renderIdentity(); }
+ state.student=null;
+ if(role==="ผู้ปกครอง"){ renderIdentity(); }
  else { state.page="home"; render(); }
 }
 function renderIdentity(){
@@ -95,7 +96,27 @@ async function render(){
   if(state.role==="นักเรียน") renderStudent(); else if(state.role==="ผู้ปกครอง") renderParent(); else renderStaff();
  }catch(e){$("app").innerHTML='<main class="main"><div class="card"><b>โหลดข้อมูลไม่สำเร็จ</b><p class="muted">'+esc(e.message)+'</p><button class="btn" onclick="render()">ลองใหม่</button></div></main>'}
 }
+function renderStudentPicker(){
+ const students=state.cache.students;
+ $("content").innerHTML='<div class="hero"><div class="hero-row"><div><p style="color:#bae6fd">โหมดนักเรียน</p><h2>แดชบอร์ดนักเรียน</h2><p>ไม่ต้องเข้าสู่ระบบ เลือกชื่อนักเรียนของตนเองเพื่อเริ่มใช้งาน</p></div><div class="pill p-blue">'+students.length+' คน</div></div></div><div class="section-title"><h3>เลือกข้อมูลของตนเอง</h3></div><div class="card"><div class="form"><label>ค้นหาชื่อ / รหัสนักเรียน</label><input id="studentPickerSearch" oninput="filterStudentPicker()" placeholder="พิมพ์ชื่อหรือ STD-001"><select id="studentPicker" size="8" style="min-height:250px" onchange="selectStudentFromPicker()"></select><button class="btn" onclick="confirmStudentPicker()">เข้าสู่แดชบอร์ดนักเรียน</button></div><div class="notice" style="margin-top:14px">ไม่มีรหัสผ่านหรือ OTP นักเรียนเพียงเลือกชื่อของตนเองเพื่อเปิดข้อมูลและทำรายการ</div></div>';
+ filterStudentPicker();
+}
+function filterStudentPicker(){
+ const el=$("studentPicker"); if(!el)return;
+ const q=($("studentPickerSearch")?.value||"").trim().toLowerCase();
+ const rows=state.cache.students.filter(s=>(s.full_name+" "+s.student_code+" "+s.level+" "+s.room).toLowerCase().includes(q));
+ el.innerHTML=rows.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.student_code)+' · '+esc(s.full_name)+' · '+esc(s.level)+' / ห้อง '+esc(s.room)+'</option>').join("") || '<option value="">ไม่พบข้อมูล</option>';
+}
+function selectStudentFromPicker(){ }
+function confirmStudentPicker(){
+ const id=$("studentPicker")?.value;
+ const s=state.cache.students.find(x=>x.id===id);
+ if(!s)return toast("กรุณาเลือกนักเรียนก่อน",false);
+ state.student=s; state.page="home"; render();
+}
+
 function renderStudent(){
+ if(!state.student){ renderStudentPicker(); return; }
  const s=state.student; const trips=state.cache.trips.filter(x=>x.student_id===s.id); const leaves=state.cache.leaves.filter(x=>x.student_id===s.id);
  if(state.page==="home"){
   const latest=trips[0]; const pending=leaves.find(x=>x.status==="รอตรวจสอบ");
