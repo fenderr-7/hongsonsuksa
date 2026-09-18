@@ -136,20 +136,23 @@ function renderTripList(trips){
 function leaveHomeForm(){
  const exists=state.cache.trips.find(x=>x.student_id===state.student.id&&x.home_date===today()&&!x.return_at);
  if(exists)return toast("วันนี้มีรายการกลับบ้านอยู่แล้ว",false);
- $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="leaveHomeModal"><div class="modal-box"><div class="modal-head"><h3>🏡 แจ้งกลับบ้าน</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="notice" style="margin:12px 0">ระบบจะบันทึกวันที่และเวลาออกจากหออัตโนมัติ และสามารถแนบภาพจากกล้องได้</div><input type="file" id="leavePhoto" accept="image/*" capture="environment"><div style="margin-top:14px"><button class="btn" onclick="createTrip()">บันทึกออกจากหอ</button></div></div></div>');
+ $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="leaveHomeModal"><div class="modal-box"><div class="modal-head"><h3>🏡 แจ้งกลับบ้าน</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="notice" style="margin:12px 0">กรอกข้อมูลคนมาส่ง/ผู้รับทุกครั้งเพื่อเป็นหลักฐาน และแนบรูปภาพได้จากกล้องมือถือ</div><div class="form two"><div><label>ชื่อคนมาส่ง / ผู้รับ *</label><input id="senderName" placeholder="ชื่อ-สกุล"></div><div><label>เบอร์โทร *</label><input id="senderPhone" inputmode="tel" placeholder="08x-xxx-xxxx"></div><div><label>ความเกี่ยวข้อง *</label><select id="senderRelation"><option value="">เลือกความเกี่ยวข้อง</option><option>บิดา</option><option>มารดา</option><option>ผู้ปกครอง</option><option>ญาติ</option><option>พี่/น้อง</option><option>ครู</option><option>ผู้ดูแล</option><option>อื่นๆ</option></select></div><div><label>รูปภาพหลักฐาน</label><input type="file" id="leavePhoto" accept="image/*" capture="environment"></div></div><div style="margin-top:16px"><button class="btn" onclick="createTrip()">📸 บันทึกการกลับบ้าน</button></div></div></div>');
 }
 async function createTrip(){
  try{
   const exists=state.cache.trips.find(x=>x.student_id===state.student.id&&x.home_date===today()&&!x.return_at);
   if(exists){closeModal();return toast("วันนี้มีรายการกลับบ้านอยู่แล้ว",false);}
+  const senderName=$("senderName")?.value.trim()||"";
+  const senderPhone=$("senderPhone")?.value.trim()||"";
+  const senderRelation=$("senderRelation")?.value||"";
+  if(!senderName||!senderPhone||!senderRelation)return toast("กรุณากรอกข้อมูลคนมาส่งให้ครบ",false);
   const file=$("leavePhoto")?.files[0]; let path=null;
   if(file) path=await upload(file,"trip-photos",state.student.student_code||state.student.id);
-  const payload={student_id:state.student.id,home_date:today(),leave_at:new Date().toISOString()};
-  if(path) payload.leave_photo_path=path;
-  const {data,error}=await sb.from("home_trips").insert(payload).select().single();
-  if(error)throw error;
+  const payload={student_id:state.student.id,home_date:today(),leave_at:new Date().toISOString(),sender_name:senderName,sender_phone:senderPhone,sender_relation:senderRelation};
+  if(path){payload.leave_evidence_photo_path=path;payload.leave_photo_path=path;}
+  const {data,error}=await sb.from("home_trips").insert(payload).select().single(); if(error)throw error;
   state.cache.trips.unshift({...data,students:state.student});
-  closeModal(); toast("บันทึกการออกจากหอแล้ว"); render();
+  closeModal(); toast("บันทึกการกลับบ้านและข้อมูลคนมาส่งแล้ว"); render();
  }catch(e){toast("บันทึกไม่สำเร็จ: "+e.message,false)}
 }
 function returnForm(){
