@@ -63,6 +63,11 @@ async function queryAll(){
 async function getStudentByCode(code){
  const {data,error}=await sb.from("students").select("*").eq("student_code",code).eq("active",true).maybeSingle(); if(error)throw error; return data;
 }
+async function getOpenTrip(studentId){
+ const {data,error}=await sb.from("home_trips").select("*,students(id,full_name,level,room,photo_path,student_number)").eq("student_id",studentId).is("return_at",null).order("leave_at",{ascending:false}).limit(1).maybeSingle();
+ if(error)throw error;
+ return data;
+}
 function start(){
  state.role=null; state.page="home"; renderRole();
 }
@@ -141,15 +146,20 @@ function renderTripList(trips){
  if(!trips.length)return '<div class="card empty">ยังไม่มีรายการ</div>';
  return '<div class="list">'+trips.map(t=>'<div class="list-item"><div class="list-main"><div><b>'+fmtDate(t.home_date)+'</b><div class="muted">ออก '+fmtDT(t.leave_at)+'</div></div>'+statusPill(t.return_at?"กลับแล้ว":"ยังไม่กลับ")+'</div><div class="muted" style="margin-top:8px">'+(t.return_at?"กลับ "+fmtDT(t.return_at):"ยังไม่มีเวลาบันทึกกลับ")+'</div>'+(t.sender_name?'<div class="muted" style="margin-top:6px">👤 ตอนออก: '+esc(t.sender_name)+' · '+esc(t.sender_relation||"-")+' · '+esc(t.sender_phone||"-")+'</div>':"")+(t.return_person_name?'<div class="muted" style="margin-top:6px">↩️ ตอนกลับ: '+esc(t.return_person_name)+' · '+esc(t.return_person_relation||"-")+' · '+esc(t.return_person_phone||"-")+'</div>':"")+'</div>').join("")+'</div>';
 }
-function leaveHomeForm(){
- const exists=state.cache.trips.find(x=>x.student_id===state.student.id&&x.home_date===today()&&!x.return_at);
- if(exists)return toast("วันนี้มีรายการกลับบ้านอยู่แล้ว",false);
- $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="leaveHomeModal"><div class="modal-box"><div class="modal-head"><h3>🏡 แจ้งกลับบ้าน</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="notice" style="margin:12px 0">กรอกข้อมูลคนมาส่ง/ผู้รับทุกครั้งเพื่อเป็นหลักฐาน และแนบรูปภาพได้จากกล้องมือถือ</div><div class="form two"><div><label>ชื่อคนมาส่ง / ผู้รับ *</label><input id="senderName" placeholder="ชื่อ-สกุล"></div><div><label>เบอร์โทร *</label><input id="senderPhone" inputmode="tel" placeholder="08x-xxx-xxxx"></div><div><label>ความเกี่ยวข้อง *</label><select id="senderRelation"><option value="">เลือกความเกี่ยวข้อง</option><option>บิดา</option><option>มารดา</option><option>ผู้ปกครอง</option><option>ญาติ</option><option>พี่/น้อง</option><option>ครู</option><option>ผู้ดูแล</option><option>อื่นๆ</option></select></div><div><label>📸 รูปภาพหลักฐานจากกล้อง / คลังภาพ</label><input type="file" id="leavePhoto" accept="image/*" capture="environment"><div class="muted" style="margin-top:5px">แตะเพื่อเปิดกล้องมือถือหรือเลือกรูปจากเครื่อง</div></div></div><div style="margin-top:16px"><button class="btn" onclick="createTrip()">📸 บันทึกการกลับบ้าน</button></div></div></div>');
+async function leaveHomeForm(){
+ try{
+  const open=await getOpenTrip(state.student.id);
+  if(open){
+   $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="openTripModal"><div class="modal-box"><div class="modal-head"><h3>⚠️ มีรายการกลับบ้านที่ยังไม่ปิด</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="notice" style="margin:12px 0">ระบบพบรายการกลับบ้านเดิมที่ยังไม่ได้บันทึกกลับเข้าหอ จึงยังไม่สามารถสร้างรายการใหม่ได้</div><div class="card" style="box-shadow:none;margin-top:12px"><b>'+esc(open.students?.full_name||state.student.full_name)+'</b><div class="muted">ออกจากหอ: '+fmtDT(open.leave_at)+'</div><div style="margin-top:7px">👤 '+esc(open.sender_name||"ไม่ระบุ")+' · 👪 '+esc(open.sender_relation||"-")+' · 📞 '+esc(open.sender_phone||"-")+'</div></div><div style="margin-top:14px"><button class="btn ok" onclick="closeModal();returnForm()">↩️ ไปบันทึกกลับเข้าหอ</button></div></div></div>');
+   return;
+  }
+  $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="leaveHomeModal"><div class="modal-box"><div class="modal-head"><h3>🏡 แจ้งกลับบ้าน</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="notice" style="margin:12px 0">กรอกข้อมูลคนมาส่ง/ผู้รับทุกครั้งเพื่อเป็นหลักฐาน และแนบรูปภาพได้จากกล้องมือถือ</div><div class="form two"><div><label>ชื่อคนมาส่ง / ผู้รับ *</label><input id="senderName" placeholder="ชื่อ-สกุล"></div><div><label>เบอร์โทร *</label><input id="senderPhone" inputmode="tel" placeholder="08x-xxx-xxxx"></div><div><label>ความเกี่ยวข้อง *</label><select id="senderRelation"><option value="">เลือกความเกี่ยวข้อง</option><option>บิดา</option><option>มารดา</option><option>ผู้ปกครอง</option><option>ญาติ</option><option>พี่/น้อง</option><option>ครู</option><option>ผู้ดูแล</option><option>อื่นๆ</option></select></div><div><label>📸 รูปภาพหลักฐานจากกล้อง / คลังภาพ</label><input type="file" id="leavePhoto" accept="image/*" capture="environment"><div class="muted" style="margin-top:5px">แตะเพื่อเปิดกล้องมือถือหรือเลือกจากคลังภาพ</div></div></div><div style="margin-top:16px"><button class="btn" onclick="createTrip()">📸 บันทึกการกลับบ้าน</button></div></div></div>');
+ }catch(e){toast("ตรวจสอบรายการกลับบ้านไม่สำเร็จ: "+e.message,false)}
 }
 async function createTrip(){
  try{
-  const exists=state.cache.trips.find(x=>x.student_id===state.student.id&&x.home_date===today()&&!x.return_at);
-  if(exists){closeModal();return toast("วันนี้มีรายการกลับบ้านอยู่แล้ว",false);}
+  const exists=await getOpenTrip(state.student.id);
+  if(exists){closeModal();return toast("มีรายการกลับบ้านที่ยังไม่ปิด กรุณาไปที่ “กลับเข้าหอ” ก่อน",false);}
   const senderName=$("senderName")?.value.trim()||"";
   const senderPhone=$("senderPhone")?.value.trim()||"";
   const senderRelation=$("senderRelation")?.value||"";
@@ -161,14 +171,19 @@ async function createTrip(){
   const {data,error}=await sb.from("home_trips").insert(payload).select().single(); if(error)throw error;
   state.cache.trips.unshift({...data,students:state.student});
   closeModal(); toast("บันทึกการกลับบ้านและข้อมูลคนมาส่งแล้ว"); render();
- }catch(e){toast("บันทึกไม่สำเร็จ: "+e.message,false)}
+ }catch(e){
+  const msg=String(e.message||e);
+  if(msg.includes("one_open_trip_per_student")||msg.includes("duplicate key"))return toast("พบรายการกลับบ้านเดิมที่ยังไม่กลับเข้าหอ กรุณาไปที่ “กลับเข้าหอ” ก่อน",false);
+  toast("บันทึกไม่สำเร็จ: "+msg,false);
+ }
 }
-function returnForm(){
- const t=state.cache.trips.find(x=>x.student_id===state.student.id&&x.home_date===today()&&!x.return_at);
- if(!t)return toast("ไม่พบรายการกลับบ้านที่ยังไม่กลับ",false);
- $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="returnModal"><div class="modal-box"><div class="modal-head"><h3>↩️ กลับเข้าหอ</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="notice" style="margin:12px 0">รายละเอียดเหมือนตอนแจ้งกลับบ้าน เพื่อยืนยันผู้มาส่ง/ผู้รับตอนกลับเข้าหอ</div><div class="notice" style="margin-bottom:12px"><b>ข้อมูลตอนออกจากหอ</b><br>👤 '+esc(t.sender_name||"ไม่ระบุ")+' · 👪 '+esc(t.sender_relation||"-")+' · 📞 '+esc(t.sender_phone||"-")+'</div><div class="form two"><div><label>👤 ชื่อคนมาส่ง / ผู้รับ ตอนกลับ *</label><input id="returnPersonName" placeholder="ชื่อ-สกุล"></div><div><label>📞 เบอร์โทร *</label><input id="returnPersonPhone" inputmode="tel" placeholder="08x-xxx-xxxx"></div><div><label>👪 ความเกี่ยวข้อง *</label><select id="returnPersonRelation"><option value="">เลือกความเกี่ยวข้อง</option><option>บิดา</option><option>มารดา</option><option>ผู้ปกครอง</option><option>ญาติ</option><option>พี่/น้อง</option><option>ครู</option><option>ผู้ดูแล</option><option>อื่นๆ</option></select></div><div><label>📸 รูปภาพหลักฐานตอนกลับ</label><input type="file" id="returnPhoto" accept="image/*" capture="environment"><div class="muted" style="margin-top:5px">แตะเพื่อเปิดกล้องมือถือหรือเลือกจากคลังภาพ</div></div></div><div style="margin-top:16px"><button class="btn ok" onclick="saveReturn(\''+t.id+'\')">↩️ บันทึกกลับเข้าหอ</button></div></div></div>');
+async function returnForm(){
+ try{
+  const t=await getOpenTrip(state.student.id);
+  if(!t)return toast("ไม่พบรายการกลับบ้านที่ยังไม่กลับ",false);
+  $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="returnModal"><div class="modal-box"><div class="modal-head"><h3>↩️ กลับเข้าหอ</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="notice" style="margin:12px 0">กรอกข้อมูลผู้มาส่ง/ผู้รับตอนกลับเข้าหอให้ครบ และแนบรูปหลักฐานจากกล้องหรือคลังภาพ</div><div class="notice" style="margin-bottom:12px"><b>รายการกลับบ้านที่กำลังปิด</b><br>ออกจากหอ: '+fmtDT(t.leave_at)+'<br>👤 ตอนออก: '+esc(t.sender_name||"ไม่ระบุ")+' · 👪 '+esc(t.sender_relation||"-")+' · 📞 '+esc(t.sender_phone||"-")+'</div><div class="form two"><div><label>👤 ชื่อผู้มาส่ง / ผู้รับ ตอนกลับ *</label><input id="returnPersonName" placeholder="ชื่อ-สกุล"></div><div><label>📞 เบอร์โทร *</label><input id="returnPersonPhone" inputmode="tel" placeholder="08x-xxx-xxxx"></div><div><label>👪 ความเกี่ยวข้อง *</label><select id="returnPersonRelation"><option value="">เลือกความเกี่ยวข้อง</option><option>บิดา</option><option>มารดา</option><option>ผู้ปกครอง</option><option>ญาติ</option><option>พี่/น้อง</option><option>ครู</option><option>ผู้ดูแล</option><option>อื่นๆ</option></select></div><div><label>📸 รูปภาพหลักฐานตอนกลับ</label><input type="file" id="returnPhoto" accept="image/*" capture="environment"><div class="muted" style="margin-top:5px">แตะเพื่อเปิดกล้องมือถือหรือเลือกจากคลังภาพ</div></div></div><div style="margin-top:16px"><button class="btn ok" onclick="saveReturn(\''+t.id+'\')">↩️ บันทึกกลับเข้าหอ</button></div></div></div>');
+ }catch(e){toast("เปิดแบบฟอร์มกลับเข้าหอไม่สำเร็จ: "+e.message,false)}
 }
-
 function closeModal(){document.querySelectorAll(".modal").forEach(x=>x.remove())}
 async function upload(file,bucket,prefix){
  if(!file)return null;
@@ -185,8 +200,10 @@ async function saveReturn(id){
   if(file) path=await upload(file,"trip-photos",state.student.student_code||state.student.id);
   const patch={return_at:new Date().toISOString(),return_person_name:returnPersonName,return_person_phone:returnPersonPhone,return_person_relation:returnPersonRelation};
   if(path){patch.return_photo_path=path;patch.return_evidence_photo_path=path;}
-  const {data,error}=await sb.from("home_trips").update(patch).eq("id",id).select().single(); if(error)throw error;
-  const idx=state.cache.trips.findIndex(x=>x.id===id); if(idx>=0)state.cache.trips[idx]={...state.cache.trips[idx],...data};
+  const {data,error}=await sb.from("home_trips").update(patch).eq("id",id).is("return_at",null).select().single();
+  if(error)throw error;
+  const idx=state.cache.trips.findIndex(x=>x.id===id);
+  if(idx>=0)state.cache.trips[idx]={...state.cache.trips[idx],...data};
   closeModal(); toast("บันทึกกลับเข้าหอและข้อมูลผู้มาส่งแล้ว"); render();
  }catch(e){toast("บันทึกกลับเข้าหอไม่สำเร็จ: "+e.message,false)}
 }
