@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0284c7">
 <meta name="description" content="Homecoming - ระบบจัดการการกลับบ้าน การพัก/ลา และการกลับเข้าหอพักนักเรียน">
+<meta name="theme-color" content="#16a34a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Homecoming">
+<link rel="manifest" href="manifest.json">
 <title>Homecoming | ระบบจัดการหอพักนักเรียน</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -39,7 +44,25 @@
  .trip-time{font-size:9px}
  .room-head{padding:8px 10px;font-size:12px}
  .trip-summary{font-size:11px}
-}</style>
+}
+.install-btn{white-space:nowrap}
+.trip-toolbar-row{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.trip-summary{flex:1;min-width:220px}
+.trip-updated{font-size:11px;color:#64748b}
+.ok-num{color:#15803d}.bad-num{color:#b91c1c}
+.room-panel{background:#fff;border:1px solid #d1fae5;border-radius:16px;margin-bottom:12px;overflow:hidden}
+.room-head{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#f0fdf4;color:#166534;border-bottom:1px solid #dcfce7}
+.trip-grid{display:grid;grid-template-columns:74px minmax(180px,1fr) 150px 110px 135px;gap:8px;align-items:center;padding:9px 10px;border-bottom:1px solid #f1f5f9;font-size:12px}
+.trip-grid.head{background:#f8fafc;color:#475569;font-weight:700;font-size:11px}
+.trip-grid:last-child{border-bottom:0}
+.trip-visuals{display:flex;gap:5px}
+.trip-time{font-size:10px;color:#475569;line-height:1.5}
+.trip-time span{display:block}
+.staff-thumb.compact{width:30px;height:30px;border-radius:8px;border-width:1px}
+.mini-action{padding:7px 10px;font-size:11px;min-height:34px}
+@media(max-width:900px){.trip-grid{grid-template-columns:60px minmax(150px,1fr) 100px 90px 105px;gap:6px;padding:8px;font-size:11px}.trip-grid.head{font-size:10px}.staff-thumb.compact{width:27px;height:27px}.mini-action{padding:6px 8px;font-size:10px}}
+@media(max-width:620px){.top-actions .install-btn{display:none!important}.trip-toolbar-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}.trip-summary{grid-column:1/-1;min-width:0;font-size:10px;padding:8px}.trip-updated{font-size:9px}.trip-grid{grid-template-columns:48px minmax(118px,1fr) 75px 62px 78px;gap:3px;padding:6px 4px;font-size:9.5px}.trip-grid.head{font-size:8.5px}.staff-thumb.compact{width:22px;height:22px}.trip-time{font-size:8px;line-height:1.35}.mini-action{padding:5px 5px;font-size:8.5px;min-height:30px}.room-head{padding:7px 9px;font-size:11px}.trip-summary{font-size:10px}}
+</style>
 </head>
 <body>
 <div id="toast" class="toast"></div>
@@ -66,7 +89,7 @@ function logoHtml(cls="logo"){
  return '<img class="'+cls+'" src="https://hongson.ac.th/hsweb/wp-content/uploads/2024/07/image.png" alt="โลโก้โรงเรียน" onerror="this.onerror=null;this.src=\'favicon.svg\'">';
 }
 function shell(title,subtitle){
- return '<div class="topbar"><div class="topbar-in"><div class="brand">'+logoHtml()+'<div><h1>'+esc(title)+'</h1><p>'+esc(subtitle)+'</p></div></div><div class="top-actions"><button class="ghost" onclick="exitRole()">← หน้าหลัก</button></div></div></div><main class="main" id="content"></main>'+nav();
+ return '<div class="topbar"><div class="topbar-in"><div class="brand">'+logoHtml()+'<div><h1>'+esc(title)+'</h1><p>'+esc(subtitle)+'</p></div></div><div class="top-actions"><button id="installAppBtn" class="ghost install-btn" onclick="installApp()" style="display:none">📲 ติดตั้งแอป</button><button class="ghost" onclick="exitRole()">← หน้าหลัก</button></div></div></div><main class="main" id="content"></main>'+nav();
 }
 function nav(){
  if(!state.role)return "";
@@ -108,11 +131,21 @@ function renderRole(){
  ].map(x=>'<button class="role" onclick="chooseRole(\''+x[0]+'\')"><div class="ico">'+x[1]+'</div><strong>'+x[0]+'</strong><span>'+x[2]+'</span></button>').join("")+"</div><p class='muted center' style='margin-top:20px'>โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ</p></div></main>";
 }
 function chooseRole(role){
- state.role=role;
- state.student=null;
- if(role==="ผู้ปกครอง"){ renderIdentity(); }
- else { state.page="home"; render(); }
+ state.role=role; state.student=null; state.page="home";
+ if(role==="ผู้ปกครอง"){ renderIdentity(); return; }
+ if(role==="นักเรียน"){ state.staffUnlocked=false; render(); return; }
+ state.staffUnlocked=false; renderPinGate(role);
 }
+function renderPinGate(role){
+ $("app").innerHTML='<main class="main"><div class="login-box"><div class="center">'+logoHtml("student-avatar")+'<div class="muted" style="margin-top:10px">เข้าสู่โหมด</div><div class="badge-big">'+esc(role)+'</div><p class="muted">กรุณากรอก PIN เพื่อเข้าแดชบอร์ด</p></div><div class="form" style="margin-top:18px"><label>PIN</label><input id="rolePin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••"><button class="btn" onclick="verifyRolePin()">🔐 ยืนยัน PIN</button><button class="btn light" onclick="start()">← กลับหน้าเลือกบทบาท</button></div><div class="notice" style="margin-top:14px">PIN สำหรับโหมดครูและผู้บริหาร: <b>1234</b></div></div></main>';
+ const pin=$("rolePin"); if(pin){pin.focus();pin.onkeydown=e=>{if(e.key==="Enter")verifyRolePin()};}
+}
+function verifyRolePin(){
+ const pin=($("rolePin")?.value||"").trim();
+ if(pin!=="1234"){ toast("PIN ไม่ถูกต้อง",false); $("rolePin").value=""; $("rolePin").focus(); return; }
+ state.staffUnlocked=true; state.page="home"; render();
+}
+
 function renderIdentity(){
  $("app").innerHTML='<main class="main"><div class="login-box"><div class="student-head">'+logoHtml("student-avatar")+'<div><div class="muted">เข้าสู่ระบบแบบเลือกนักเรียน</div><div class="badge-big">'+esc(state.role)+'</div></div></div><div class="form" style="margin-top:18px"><label>รหัสนักเรียน</label><input id="identityCode" placeholder="เช่น STD-001" autocomplete="off"><button class="btn" onclick="identitySubmit()">เข้าสู่ระบบ</button><button class="btn light" onclick="start()">← เปลี่ยนประเภทผู้ใช้งาน</button></div><div class="notice" style="margin-top:14px">ใช้รหัสนักเรียนเพื่อเปิดข้อมูลของนักเรียนคนนั้น ระบบนี้เป็นเวอร์ชันใช้งานภายในและยังไม่ได้เปิด Auth/PIN</div></div></main>';
  $("identityCode").focus();
@@ -322,31 +355,40 @@ function renderAlerts(tr,lr){
 }
 function renderStaffTrips(){
  if(!state.tripDate)state.tripDate=today();
- if(!Array.isArray(state.tripRows)||!state.tripRows.length){
-   state.tripRows=state.cache.trips.filter(x=>x.home_date===state.tripDate);
- }
- const rooms=[...new Set(state.tripRows.map(x=>x.students?.room).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"th",{numeric:true}));
- $("content").innerHTML='<div class="section-title"><h3>🏡 การกลับบ้าน</h3><div class="toolbar"><button class="ghost" onclick="loadTripDate(state.tripDate)">↻ รีเฟรช</button><button class="btn light" onclick="exportCSV()">ส่งออก CSV</button></div></div><div class="card trip-toolbar"><div class="form" style="gap:10px"><div class="form two"><div><label>📅 เลือกวันที่</label><input type="date" id="tripDate" value="'+esc(state.tripDate)+'" onchange="loadTripDate(this.value)"></div><div><label>🔎 ค้นหารายชื่อ</label><input id="tripNameFilter" oninput="filterTripView()" placeholder="ชื่อ-สกุล"></div><div><label>🏠 กรองห้อง</label><select id="tripRoomFilter" onchange="filterTripView()"><option value="">ทุกห้อง</option>'+rooms.map(r=>'<option>'+esc(r)+'</option>').join("")+'</select></div><div><label>ข้อมูลวันที่เลือก</label><div class="trip-summary" id="tripSummary">-</div></div></div></div></div><div id="tripRooms" style="margin-top:12px"></div>';
- filterTripView();
+ $("content").innerHTML='<div class="section-title"><h3>⚡ เช็กการกลับบ้าน</h3><div class="toolbar"><button class="ghost" onclick="loadTripDate(state.tripDate,true)">↻ อัปเดต</button><button class="btn light" onclick="exportCSV()">ส่งออก CSV</button></div></div><div class="card trip-toolbar"><div class="form" style="gap:10px"><div class="form two"><div><label>📅 วันที่</label><input type="date" id="tripDate" value="'+esc(state.tripDate)+'" onchange="loadTripDate(this.value,true)"></div><div><label>🔎 รายชื่อ</label><input id="tripNameFilter" oninput="filterTripView()" placeholder="ค้นหาชื่อ-สกุล"></div><div><label>🏠 ห้อง</label><select id="tripRoomFilter" onchange="filterTripView()"><option value="">ทุกห้อง</option></select></div><div><label>สถานะ</label><select id="tripStatusFilter" onchange="filterTripView()"><option value="all">ทั้งหมด</option><option value="out">🔴 ยังไม่กลับ</option><option value="returned">🟢 กลับแล้ว</option></select></div></div></div><div class="trip-toolbar-row"><div class="trip-summary" id="tripSummary">กำลังโหลด…</div><div class="trip-updated" id="tripUpdated">-</div><button class="ghost" onclick="clearTripFilters()">ล้างตัวกรอง</button></div></div><div id="tripRooms" style="margin-top:12px"><div class="card empty">กำลังโหลดข้อมูล…</div></div>';
+ if(state.tripRowsDate!==state.tripDate){ loadTripDate(state.tripDate,false); } else { filterTripView(); }
+ startTripAutoRefresh();
 }
 function clearTripFilters(){
  if($("tripNameFilter"))$("tripNameFilter").value="";
  if($("tripRoomFilter"))$("tripRoomFilter").value="";
+ if($("tripStatusFilter"))$("tripStatusFilter").value="all";
  filterTripView();
 }
-async function loadTripDate(date){
+function startTripAutoRefresh(){
+ stopTripAutoRefresh();
+ tripAutoRefreshTimer=setInterval(()=>{ if((state.role==="ครู"||state.role==="ผู้บริหาร")&&state.page==="trips")loadTripDate(state.tripDate,false);else stopTripAutoRefresh(); },30000);
+}
+function stopTripAutoRefresh(){
+ if(tripAutoRefreshTimer){clearInterval(tripAutoRefreshTimer);tripAutoRefreshTimer=null;}
+}
+async function loadTripDate(date,showToast=false){
  if(!date)return;
  state.tripDate=date;
  try{
   const {data,error}=await sb.from("home_trips").select("*,students(id,full_name,level,room,photo_path,student_number)").eq("home_date",date).order("leave_at",{ascending:false});
   if(error)throw error;
   state.tripRows=data||[];
+  state.tripRowsDate=date;
+  state.lastTripRefresh=new Date();
   filterTripView();
+  if(showToast)toast("อัปเดตข้อมูล "+fmtDate(date)+" แล้ว");
  }catch(e){toast("โหลดข้อมูลวันที่เลือกไม่สำเร็จ: "+e.message,false)}
 }
 function filterTripView(){
  const name=($("tripNameFilter")?.value||"").trim().toLowerCase();
  const room=($("tripRoomFilter")?.value||"");
+ const status=$("tripStatusFilter")?.value||"all";
  const base=state.tripRows||[];
  const allRooms=[...new Set(base.map(t=>t.students?.room).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"th",{numeric:true}));
  const roomSelect=$("tripRoomFilter");
@@ -355,47 +397,21 @@ function filterTripView(){
   roomSelect.innerHTML='<option value="">ทุกห้อง</option>'+allRooms.map(r=>'<option value="'+esc(r)+'">'+esc(r)+'</option>').join("");
   roomSelect.value=allRooms.includes(keep)?keep:"";
  }
- const rows=base.filter(t=>
-  (!name||(t.students?.full_name||"").toLowerCase().includes(name))&&(!room||String(t.students?.room||"")===room)
- );
+ const rows=base.filter(t=>(!name||(t.students?.full_name||"").toLowerCase().includes(name))&&(!room||String(t.students?.room||"")===room)&&(status==="all"||(status==="out"&&!t.return_at)||(status==="returned"&&!!t.return_at)));
  const total=rows.length, returned=rows.filter(t=>t.return_at).length, outside=total-returned;
  const rooms=[...new Set(rows.map(t=>t.students?.room).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"th",{numeric:true}));
  const summary=$("tripSummary"); if(summary)summary.innerHTML='<b>'+total+'</b> รายการ · <b class="ok-num">'+returned+'</b> กลับแล้ว · <b class="bad-num">'+outside+'</b> ยังไม่กลับ · '+rooms.length+' ห้อง';
+ const updated=$("tripUpdated"); if(updated)updated.textContent=state.lastTripRefresh?'อัปเดต '+state.lastTripRefresh.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"-";
  const root=$("tripRooms"); if(!root)return;
  if(!rows.length){root.innerHTML='<div class="card empty">ไม่พบข้อมูลการกลับบ้านตามเงื่อนไข</div>';return}
  root.innerHTML=rooms.map(room=>{
   const rr=rows.filter(t=>String(t.students?.room||"")===String(room));
-  return '<div class="room-panel"><div class="room-head"><b>🏠 ห้อง '+esc(room)+'</b><span>'+rr.length+' รายการ</span></div><div class="trip-grid head"><div>รูป</div><div>นักเรียน</div><div>ออก</div><div>กลับ</div><div>สถานะ</div><div></div></div>'+rr.map(t=>{
+  return '<div class="room-panel"><div class="room-head"><b>🏠 ห้อง '+esc(room)+'</b><span>'+rr.length+' รายการ</span></div><div class="trip-grid head"><div>รูป</div><div>นักเรียน</div><div>เวลา</div><div>สถานะ</div><div></div></div>'+rr.map(t=>{
    const sp=t.students?.photo_path?'<img class="staff-thumb compact" src="'+esc(publicUrl("student-photos",t.students.photo_path))+'" alt="รูปนักเรียน">':'<div class="staff-thumb compact placeholder">🎓</div>';
    const gp=(t.leave_evidence_photo_path||t.leave_photo_path)?'<img class="staff-thumb compact" src="'+esc(publicUrl("trip-photos",t.leave_evidence_photo_path||t.leave_photo_path))+'" alt="รูปคนมาส่ง">':'<div class="staff-thumb compact placeholder">👤</div>';
-   return '<div class="trip-grid"><div class="trip-visuals">'+sp+gp+'</div><div><b>'+esc(t.students?.full_name||"-")+'</b><div class="muted">เลขที่ '+esc(t.students?.student_number??"-")+' · '+esc(t.students?.level||"")+'</div><div class="muted">👤 '+esc(t.sender_name||"ไม่ระบุ")+' · '+esc(t.sender_relation||"-")+'</div></div><div class="trip-time">'+fmtDT(t.leave_at)+'</div><div class="trip-time">'+fmtDT(t.return_at)+'</div><div>'+statusPill(t.return_at?"กลับแล้ว":"ยังไม่กลับ")+'</div><div><button class="btn light mini-action" onclick="showTrip(\''+t.id+'\')">ดูรายละเอียด / รูปภาพ</button></div></div>';
+   return '<div class="trip-grid"><div class="trip-visuals">'+sp+gp+'</div><div><b>'+esc(t.students?.full_name||"-")+'</b><div class="muted">เลขที่ '+esc(t.students?.student_number??"-")+' · '+esc(t.students?.level||"")+'</div></div><div class="trip-time"><span>ออก: '+fmtDT(t.leave_at)+'</span><span>กลับ: '+fmtDT(t.return_at)+'</span></div><div>'+statusPill(t.return_at?"กลับแล้ว":"ยังไม่กลับ")+'</div><div><button class="btn light mini-action" onclick="showTrip(\''+t.id+'\')">ดูรายละเอียด / รูปภาพ</button></div></div>';
   }).join("")+'</div>';
  }).join("");
-}
-
-async function staffReturn(id){
- try{
-  const {data,error}=await sb.from("home_trips").update({return_at:new Date().toISOString()}).eq("id",id).is("return_at",null).select("*,students(id,full_name,level,room,photo_path,student_number)").single();
-  if(error)throw error;
-  const i=state.cache.trips.findIndex(x=>x.id===id);if(i>=0)state.cache.trips[i]={...state.cache.trips[i],...data};
-  const j=(state.tripRows||[]).findIndex(x=>x.id===id);if(j>=0)state.tripRows[j]={...state.tripRows[j],...data};
-  toast("บันทึกกลับเข้าหอแล้ว");render();
-}
-catch(e){toast("ทำรายการไม่สำเร็จ: "+e.message,false)}
-}
-
-function showTrip(id){
- const t=(state.tripRows||[]).find(x=>x.id===id)||state.cache.trips.find(x=>x.id===id); if(!t)return;
- const student=t.students?.photo_path?publicUrl("student-photos",t.students.photo_path):"";
- const sender=t.leave_evidence_photo_path||t.leave_photo_path?publicUrl("trip-photos",t.leave_evidence_photo_path||t.leave_photo_path):"";
- const ret=t.return_photo_path?publicUrl("trip-photos",t.return_photo_path):"";
- const returnEvidence=t.return_evidence_photo_path&&t.return_evidence_photo_path!==t.return_photo_path?publicUrl("trip-photos",t.return_evidence_photo_path):"";
- const info='<div class="grid two" style="margin-top:12px"><div class="notice"><b>👤 คนมาส่ง / ผู้รับ ตอนออก</b><br>'+esc(t.sender_name||"ไม่ระบุ")+'<br>ความเกี่ยวข้อง: '+esc(t.sender_relation||"-")+'<br>เบอร์โทร: '+esc(t.sender_phone||"-")+'</div><div class="notice"><b>↩️ คนมาส่ง / ผู้รับ ตอนกลับ</b><br>'+esc(t.return_person_name||"ยังไม่บันทึก")+'<br>ความเกี่ยวข้อง: '+esc(t.return_person_relation||"-")+'<br>เบอร์โทร: '+esc(t.return_person_phone||"-")+'</div></div>';
- const img=(src,label)=>src?'<div><div style="font-weight:700;margin:0 0 7px">'+label+'</div><img class="detail-photo" src="'+esc(src)+'" alt="'+esc(label)+'" onclick="openImage(this.src,\''+esc(label)+'\')"><div class="muted" style="margin-top:4px">แตะรูปเพื่อขยาย</div></div>':'<div class="notice"><b>'+label+'</b><br>ไม่มีรูปภาพ</div>';
- $("app").insertAdjacentHTML("beforeend",'<div class="modal open"><div class="modal-box"><div class="modal-head"><h3>รายละเอียดการกลับบ้าน</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="student-head">'+photoForStudent(t.students||{})+'<div><div class="badge-big" style="font-size:20px">'+esc(t.students?.full_name||"นักเรียน")+'</div><div class="muted">เลขที่ '+esc(t.students?.student_number??"-")+' · '+esc(t.students?.level||"")+' / ห้อง '+esc(t.students?.room||"")+'</div></div></div>'+info+'<div class="section-title"><h3>📸 หลักฐานรูปภาพ</h3><span class="muted">แตะภาพเพื่อขยายเต็มจอ</span></div><div class="photo-grid">'+img(student,"รูปนักเรียน")+img(sender,"รูปคนมาส่ง / หลักฐานตอนออก")+img(ret,"รูปตอนกลับเข้าหอ")+img(returnEvidence,"รูปหลักฐานตอนกลับ")+'</div></div></div>');
-}
-function openImage(src,title){
- $("app").insertAdjacentHTML("beforeend",'<div class="modal open" onclick="this.remove()"><div class="modal-box center" onclick="event.stopPropagation()"><div class="modal-head"><h3>'+esc(title)+'</h3><button class="ghost" onclick="this.closest(\'.modal\').remove()">ปิด</button></div><img src="'+esc(src)+'" alt="'+esc(title)+'" style="width:100%;max-height:78vh;object-fit:contain;border-radius:16px;margin-top:10px"></div></div>');
 }
 function renderStaffLeaves(){
  const rows=state.cache.leaves;
@@ -434,9 +450,20 @@ function exportCSV(){
  const csv="\\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\\n");
  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="homecoming-report-"+today()+".csv";a.click();URL.revokeObjectURL(a.href);toast("ส่งออกรายงานแล้ว");
 }
-function route(p){state.page=p;render()}
+function route(p){if(p!=="trips")stopTripAutoRefresh();state.page=p;render()}
 window.addEventListener("error",e=>console.error(e));
 start();
+
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;const b=document.getElementById("installAppBtn");if(b)b.style.display="inline-block";});
+window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;const b=document.getElementById("installAppBtn");if(b)b.style.display="none";toast("ติดตั้ง Homecoming บนเครื่องแล้ว");});
+async function installApp(){
+ if(!deferredInstallPrompt){toast("ใช้เมนูเบราว์เซอร์ แล้วเลือก “เพิ่มไปยังหน้าจอหลัก”");return;}
+ deferredInstallPrompt.prompt();
+ const result=await deferredInstallPrompt.userChoice;
+ if(result.outcome!=="accepted")toast("ยังไม่ได้ติดตั้งแอป");
+ deferredInstallPrompt=null;const b=document.getElementById("installAppBtn");if(b)b.style.display="none";
+}
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 </script>
 </body>
 </html>
