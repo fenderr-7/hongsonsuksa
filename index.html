@@ -329,6 +329,11 @@ function renderStaffTrips(){
  $("content").innerHTML='<div class="section-title"><h3>🏡 การกลับบ้าน</h3><div class="toolbar"><button class="ghost" onclick="loadTripDate(state.tripDate)">↻ รีเฟรช</button><button class="btn light" onclick="exportCSV()">ส่งออก CSV</button></div></div><div class="card trip-toolbar"><div class="form" style="gap:10px"><div class="form two"><div><label>📅 เลือกวันที่</label><input type="date" id="tripDate" value="'+esc(state.tripDate)+'" onchange="loadTripDate(this.value)"></div><div><label>🔎 ค้นหารายชื่อ</label><input id="tripNameFilter" oninput="filterTripView()" placeholder="ชื่อ-สกุล"></div><div><label>🏠 กรองห้อง</label><select id="tripRoomFilter" onchange="filterTripView()"><option value="">ทุกห้อง</option>'+rooms.map(r=>'<option>'+esc(r)+'</option>').join("")+'</select></div><div><label>ข้อมูลวันที่เลือก</label><div class="trip-summary" id="tripSummary">-</div></div></div></div></div><div id="tripRooms" style="margin-top:12px"></div>';
  filterTripView();
 }
+function clearTripFilters(){
+ if($("tripNameFilter"))$("tripNameFilter").value="";
+ if($("tripRoomFilter"))$("tripRoomFilter").value="";
+ filterTripView();
+}
 async function loadTripDate(date){
  if(!date)return;
  state.tripDate=date;
@@ -341,8 +346,16 @@ async function loadTripDate(date){
 }
 function filterTripView(){
  const name=($("tripNameFilter")?.value||"").trim().toLowerCase();
- const room=$("tripRoomFilter")?.value||"";
- const rows=(state.tripRows||[]).filter(t=>
+ const room=($("tripRoomFilter")?.value||"");
+ const base=state.tripRows||[];
+ const allRooms=[...new Set(base.map(t=>t.students?.room).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"th",{numeric:true}));
+ const roomSelect=$("tripRoomFilter");
+ if(roomSelect){
+  const keep=room;
+  roomSelect.innerHTML='<option value="">ทุกห้อง</option>'+allRooms.map(r=>'<option value="'+esc(r)+'">'+esc(r)+'</option>').join("");
+  roomSelect.value=allRooms.includes(keep)?keep:"";
+ }
+ const rows=base.filter(t=>
   (!name||(t.students?.full_name||"").toLowerCase().includes(name))&&(!room||String(t.students?.room||"")===room)
  );
  const total=rows.length, returned=rows.filter(t=>t.return_at).length, outside=total-returned;
@@ -352,7 +365,7 @@ function filterTripView(){
  if(!rows.length){root.innerHTML='<div class="card empty">ไม่พบข้อมูลการกลับบ้านตามเงื่อนไข</div>';return}
  root.innerHTML=rooms.map(room=>{
   const rr=rows.filter(t=>String(t.students?.room||"")===String(room));
-  return '<div class="room-panel"><div class="room-head"><b>🏠 ห้อง '+esc(room)+'</b><span>'+rr.length+' รายการ</span></div><div class="trip-grid head"><div></div><div>นักเรียน</div><div>ออก</div><div>กลับ</div><div>สถานะ</div><div></div></div>'+rr.map(t=>{
+  return '<div class="room-panel"><div class="room-head"><b>🏠 ห้อง '+esc(room)+'</b><span>'+rr.length+' รายการ</span></div><div class="trip-grid head"><div>รูป</div><div>นักเรียน</div><div>ออก</div><div>กลับ</div><div>สถานะ</div><div></div></div>'+rr.map(t=>{
    const sp=t.students?.photo_path?'<img class="staff-thumb compact" src="'+esc(publicUrl("student-photos",t.students.photo_path))+'" alt="รูปนักเรียน">':'<div class="staff-thumb compact placeholder">🎓</div>';
    const gp=(t.leave_evidence_photo_path||t.leave_photo_path)?'<img class="staff-thumb compact" src="'+esc(publicUrl("trip-photos",t.leave_evidence_photo_path||t.leave_photo_path))+'" alt="รูปคนมาส่ง">':'<div class="staff-thumb compact placeholder">👤</div>';
    return '<div class="trip-grid"><div class="trip-visuals">'+sp+gp+'</div><div><b>'+esc(t.students?.full_name||"-")+'</b><div class="muted">เลขที่ '+esc(t.students?.student_number??"-")+' · '+esc(t.students?.level||"")+'</div><div class="muted">👤 '+esc(t.sender_name||"ไม่ระบุ")+' · '+esc(t.sender_relation||"-")+'</div></div><div class="trip-time">'+fmtDT(t.leave_at)+'</div><div class="trip-time">'+fmtDT(t.return_at)+'</div><div>'+statusPill(t.return_at?"กลับแล้ว":"ยังไม่กลับ")+'</div><div><button class="btn light mini-action" onclick="showTrip(\''+t.id+'\')">ดูรายละเอียด / รูปภาพ</button></div></div>';
@@ -361,10 +374,18 @@ function filterTripView(){
 }
 
 async function staffReturn(id){
- try{const {data,error}=await sb.from("home_trips").update({return_at:new Date().toISOString()}).eq("id",id).is("return_at",null).select().single();if(error)throw error;const i=state.cache.trips.findIndex(x=>x.id===id);if(i>=0)state.cache.trips[i]={...state.cache.trips[i],...data};toast("บันทึกกลับเข้าหอแล้ว");render()}catch(e){toast("ทำรายการไม่สำเร็จ: "+e.message,false)}
+ try{
+  const {data,error}=await sb.from("home_trips").update({return_at:new Date().toISOString()}).eq("id",id).is("return_at",null).select("*,students(id,full_name,level,room,photo_path,student_number)").single();
+  if(error)throw error;
+  const i=state.cache.trips.findIndex(x=>x.id===id);if(i>=0)state.cache.trips[i]={...state.cache.trips[i],...data};
+  const j=(state.tripRows||[]).findIndex(x=>x.id===id);if(j>=0)state.tripRows[j]={...state.tripRows[j],...data};
+  toast("บันทึกกลับเข้าหอแล้ว");render();
 }
+catch(e){toast("ทำรายการไม่สำเร็จ: "+e.message,false)}
+}
+
 function showTrip(id){
- const t=state.cache.trips.find(x=>x.id===id); if(!t)return;
+ const t=(state.tripRows||[]).find(x=>x.id===id)||state.cache.trips.find(x=>x.id===id); if(!t)return;
  const student=t.students?.photo_path?publicUrl("student-photos",t.students.photo_path):"";
  const sender=t.leave_evidence_photo_path||t.leave_photo_path?publicUrl("trip-photos",t.leave_evidence_photo_path||t.leave_photo_path):"";
  const ret=t.return_photo_path?publicUrl("trip-photos",t.return_photo_path):"";
