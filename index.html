@@ -138,7 +138,7 @@ function renderStudent(){
  const s=state.student; const trips=state.cache.trips.filter(x=>x.student_id===s.id); const leaves=state.cache.leaves.filter(x=>x.student_id===s.id);
  if(state.page==="home"){
   const latest=trips[0]; const pending=leaves.find(x=>x.status==="รอตรวจสอบ");
-  $("content").innerHTML='<div class="hero"><div class="hero-row"><div><p style="color:#dcfce7">ยินดีต้อนรับ</p><h2>'+esc(s.full_name)+'</h2><p>ชั้น '+esc(s.level)+' · ห้อง '+esc(s.room)+' · เลขที่ '+esc(s.student_number??"-")+'</p></div><div>'+statusPill(latest?(latest.return_at?"กลับเข้าหอแล้ว":"ยังไม่กลับ"):"ยังไม่มีรายการวันนี้")+'</div></div></div><div class="section-title"><h3>เมนูด่วน</h3></div><div class="grid quick"><button onclick="leaveHomeForm()">🏡<b>แจ้งกลับบ้าน</b><span class="muted">บันทึกเวลาออกจากหอ</span></button><button onclick="returnForm()">↩️<b>กลับเข้าหอ</b><span class="muted">บันทึกเวลากลับและรูปถ่าย</span></button><button onclick="route(\'leave\')">📝<b>แจ้งพัก / ลา</b><span class="muted">'+(pending?"มีรายการรอตรวจสอบ":"ส่งคำขอให้ครูตรวจ")+'</span></button><button onclick="route(\'history\')">🕘<b>ดูประวัติ</b><span class="muted">'+trips.length+' รายการกลับบ้าน · '+leaves.length+' รายการพัก/ลา</span></button></div><div class="section-title"><h3>สถานะล่าสุด</h3></div><div class="card"><div class="student-head">'+photoForStudent(s) + '<div><div class="badge-big">'+esc(s.full_name)+'</div><div class="muted">'+esc(s.level)+' / ห้อง '+esc(s.room)+'</div></div></div><div class="notice" style="margin-top:14px">'+(latest?"รายการล่าสุด: "+fmtDT(latest.leave_at)+" · "+(latest.return_at?"กลับ "+fmtDT(latest.return_at):"ยังไม่บันทึกการกลับเข้าหอ"):"ยังไม่มีรายการกลับบ้าน")+'</div></div>';
+  $("content").innerHTML='<div class="hero"><div class="hero-row"><div><p style="color:#dcfce7">ยินดีต้อนรับ</p><h2>'+esc(s.full_name)+'</h2><p>ชั้น '+esc(s.level)+' · ห้อง '+esc(s.room)+' · เลขที่ '+esc(s.student_number??"-")+'</p></div><div>'+statusPill(latest?(latest.return_at?"กลับเข้าหอแล้ว":"ยังไม่กลับ"):"ยังไม่มีรายการวันนี้")+'</div></div></div><div class="section-title"><h3>เมนูด่วน</h3></div><div class="grid quick"><button onclick="leaveHomeForm()">🏡<b>แจ้งกลับบ้าน</b><span class="muted">บันทึกเวลาออกจากหอ</span></button><button onclick="returnForm()">↩️<b>กลับเข้าหอ</b><span class="muted">บันทึกเวลากลับและรูปถ่าย</span></button><button onclick="route(\'leave\')">📝<b>แจ้งพัก / ลา</b><span class="muted">'+(pending?"มีรายการรอตรวจสอบ":"ส่งคำขอให้ครูตรวจ")+'</span></button><button onclick="route(\'history\')">🕘<b>ดูประวัติ</b><span class="muted">'+trips.length+' รายการกลับบ้าน · '+leaves.length+' รายการพัก/ลา</span></button></div><div class="notice" style="margin-top:10px">💡 <b>คำใบ้:</b> ออกจากหอให้กด <b>แจ้งกลับบ้าน</b> · ถึงหอแล้วกด <b>กลับเข้าหอ</b> · ไม่อยู่หอให้ใช้ <b>แจ้งพัก / ลา</b> · ย้อนดูข้อมูลได้ที่ <b>ประวัติ</b></div><div class="section-title"><h3>สถานะล่าสุด</h3></div><div class="card"><div class="student-head">'+photoForStudent(s) + '<div><div class="badge-big">'+esc(s.full_name)+'</div><div class="muted">'+esc(s.level)+' / ห้อง '+esc(s.room)+'</div></div></div><div class="notice" style="margin-top:14px">'+(latest?"รายการล่าสุด: "+fmtDT(latest.leave_at)+" · "+(latest.return_at?"กลับ "+fmtDT(latest.return_at):"ยังไม่บันทึกการกลับเข้าหอ"):"ยังไม่มีรายการกลับบ้าน")+'</div></div>';
  } else if(state.page==="trip") renderTripStudent(trips);
  else if(state.page==="leave") renderLeaveStudent(leaves);
  else renderHistoryStudent(trips,leaves);
@@ -323,6 +323,47 @@ function renderStudents(){
  $("content").innerHTML='<div class="section-title"><h3>👥 จัดการนักเรียน</h3><button class="ghost" onclick="queryAll().then(render)">รีเฟรช</button></div><div class="card"><div class="form two"><div style="grid-column:1/-1"><label>🔎 ค้นหาชื่อ</label><input id="stuSearch" oninput="filterStudents()" placeholder="ชื่อ-สกุล"></div><div><label>ชั้น</label><select id="levelFilter" onchange="filterStudents()"><option value="">ทุกชั้น</option>'+[...new Set(st.map(x=>x.level).filter(Boolean))].map(v=>'<option>'+esc(v)+'</option>').join("")+'</select></div><div><label>ห้อง</label><select id="roomFilter" onchange="filterStudents()"><option value="">ทุกห้อง</option>'+[...new Set(st.map(x=>x.room).filter(Boolean))].map(v=>'<option>'+esc(v)+'</option>').join("")+'</select></div><div><label>เลขที่</label><input id="numberFilter" type="number" min="1" inputmode="numeric" oninput="filterStudents()" placeholder="เลขที่"></div></div></div><div class="card table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th>รูป</th><th>ชื่อ-สกุล</th><th>เลขที่</th><th>ชั้น</th><th>ห้อง</th><th>จัดการ</th></tr></thead><tbody id="studentRows"></tbody></table></div>'; filterStudents();
 }
 
+async function compressStudentImage(file,maxWidth=800,maxHeight=800,maxBytes=450000){
+ if(!file||!file.type.startsWith("image/"))throw new Error("กรุณาเลือกไฟล์รูปภาพ");
+ if(file.size>8*1024*1024)throw new Error("ไฟล์ต้นฉบับใหญ่เกิน 8MB");
+ const bitmap=await createImageBitmap(file);
+ const scale=Math.min(1,maxWidth/bitmap.width,maxHeight/bitmap.height);
+ const w=Math.max(1,Math.round(bitmap.width*scale)), h=Math.max(1,Math.round(bitmap.height*scale));
+ const canvas=document.createElement("canvas"); canvas.width=w; canvas.height=h;
+ const ctx=canvas.getContext("2d"); if(!ctx)throw new Error("เบราว์เซอร์ไม่รองรับการย่อรูป");
+ ctx.drawImage(bitmap,0,0,w,h);
+ let quality=.82, blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));
+ while(blob&&blob.size>maxBytes&&quality>.45){quality-=.07;blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality))}
+ bitmap.close();
+ if(!blob||blob.size>maxBytes)throw new Error("ย่อรูปแล้วยังใหญ่เกินประมาณ 450 KB");
+ return blob;
+}
+function openProfileUpload(id){
+ const s=state.cache.students.find(x=>x.id===id); if(!s)return;
+ const current=s.photo_path?publicUrl("student-photos",s.photo_path):"";
+ $("app").insertAdjacentHTML("beforeend",'<div class="modal open" id="profileModal"><div class="modal-box"><div class="modal-head"><h3>📸 รูปโปรไฟล์นักเรียน</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="center"><img id="profilePreview" class="profile-upload-preview" src="'+esc(current||"favicon.svg")+'" alt="ตัวอย่างรูป"><p class="upload-note" style="margin:10px 0">นักเรียน: <b>'+esc(s.full_name)+'</b><br>ระบบจะย่อรูปอัตโนมัติให้ไม่เกินประมาณ 450 KB และเก็บเป็น JPG</p></div><input id="profilePhotoInput" type="file" accept="image/*" capture="environment" onchange="previewProfilePhoto(event)"><div class="upload-note" style="margin-top:8px">รองรับมือถือ: แตะเพื่อเปิดกล้องหรือเลือกรูปจากเครื่อง</div><div style="margin-top:14px"><button class="btn" onclick="saveProfilePhoto(\''+id+'\')">💾 บันทึกรูปโปรไฟล์</button></div></div></div>');
+}
+function previewProfilePhoto(event){
+ const file=event.target.files?.[0]; if(!file)return;
+ if(!file.type.startsWith("image/"))return toast("กรุณาเลือกไฟล์รูปภาพ",false);
+ if(file.size>8*1024*1024)return toast("ไฟล์ต้นฉบับใหญ่เกิน 8MB",false);
+ const reader=new FileReader(); reader.onload=()=>{$("profilePreview").src=reader.result}; reader.readAsDataURL(file);
+}
+async function saveProfilePhoto(id){
+ try{
+  const file=$("profilePhotoInput")?.files?.[0]; if(!file)return toast("กรุณาเลือกรูปภาพก่อน",false);
+  const blob=await compressStudentImage(file);
+  const path="profiles/"+id+".jpg";
+  const {error:upErr}=await sb.storage.from("student-photos").upload(path,blob,{upsert:true,contentType:"image/jpeg",cacheControl:"3600"});
+  if(upErr)throw upErr;
+  const {data,error}=await sb.from("students").update({photo_path:path,updated_at:new Date().toISOString()}).eq("id",id).select().single();
+  if(error)throw error;
+  const idx=state.cache.students.findIndex(x=>x.id===id); if(idx>=0)state.cache.students[idx]={...state.cache.students[idx],...data};
+  const trips=state.cache.trips||[]; trips.forEach(t=>{if(t.student_id===id&&t.students)t.students.photo_path=path});
+  const teacherTrips=state.cache.teacherTrips||[]; teacherTrips.forEach(t=>{if(t.student_id===id&&t.students)t.students.photo_path=path});
+  closeModal(); toast("บันทึกรูปโปรไฟล์แล้ว"); render();
+ }catch(e){toast("อัปโหลดรูปไม่สำเร็จ: "+e.message,false)}
+}
 function filterStudents(){
  const q=($("stuSearch")?.value||"").trim().toLowerCase(), lv=$("levelFilter")?.value||"", room=$("roomFilter")?.value||"", num=($("numberFilter")?.value||"").trim();
  const rows=state.cache.students.filter(s=>{
