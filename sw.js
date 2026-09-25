@@ -1,4 +1,4 @@
-const CACHE_NAME="homecoming-v2-1790159098731";
+const CACHE_NAME="homecoming-v2-2026-09-25-fix-2";
 const APP_SHELL=["./","./index.html","./manifest.json","./favicon.svg"];
 self.addEventListener("install",event=>{
  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting()));
