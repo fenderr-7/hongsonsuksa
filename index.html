@@ -413,6 +413,38 @@ function filterTripView(){
   }).join("")+'</div>';
  }).join("");
 }
+async function staffReturn(id){
+ try{
+  const {data,error}=await sb.from("home_trips")
+    .update({return_at:new Date().toISOString()})
+    .eq("id",id)
+    .is("return_at",null)
+    .select("*,students(id,full_name,level,room,photo_path,student_number)")
+    .single();
+  if(error)throw error;
+  const i=state.cache.trips.findIndex(x=>x.id===id);
+  if(i>=0)state.cache.trips[i]={...state.cache.trips[i],...data};
+  const j=(state.tripRows||[]).findIndex(x=>x.id===id);
+  if(j>=0)state.tripRows[j]={...state.tripRows[j],...data};
+  toast("บันทึกกลับเข้าหอแล้ว");
+  render();
+ }catch(e){toast("ทำรายการไม่สำเร็จ: "+e.message,false)}
+}
+function showTrip(id){
+ const t=(state.tripRows||[]).find(x=>x.id===id)||state.cache.trips.find(x=>x.id===id);
+ if(!t)return toast("ไม่พบรายการนี้",false);
+ const student=t.students?.photo_path?publicUrl("student-photos",t.students.photo_path):"";
+ const sender=(t.leave_evidence_photo_path||t.leave_photo_path)?publicUrl("trip-photos",t.leave_evidence_photo_path||t.leave_photo_path):"";
+ const ret=t.return_photo_path?publicUrl("trip-photos",t.return_photo_path):"";
+ const returnEvidence=t.return_evidence_photo_path&&t.return_evidence_photo_path!==t.return_photo_path?publicUrl("trip-photos",t.return_evidence_photo_path):"";
+ const info='<div class="grid two" style="margin-top:12px"><div class="notice"><b>👤 คนมาส่ง / ผู้รับ ตอนออก</b><br>'+esc(t.sender_name||"ไม่ระบุ")+'<br>ความเกี่ยวข้อง: '+esc(t.sender_relation||"-")+'<br>เบอร์โทร: '+esc(t.sender_phone||"-")+'</div><div class="notice"><b>↩️ คนมาส่ง / ผู้รับ ตอนกลับ</b><br>'+esc(t.return_person_name||"ยังไม่บันทึก")+'<br>ความเกี่ยวข้อง: '+esc(t.return_person_relation||"-")+'<br>เบอร์โทร: '+esc(t.return_person_phone||"-")+'</div></div>';
+ const img=(src,label)=>src?'<div><div style="font-weight:700;margin:0 0 7px">'+label+'</div><img class="detail-photo" src="'+esc(src)+'" alt="'+esc(label)+'" onclick="openImage(this.src,\''+esc(label)+'\')"><div class="muted" style="margin-top:4px">แตะรูปเพื่อขยาย</div></div>':'<div class="notice"><b>'+label+'</b><br>ไม่มีรูปภาพ</div>';
+ $("app").insertAdjacentHTML("beforeend",'<div class="modal open"><div class="modal-box"><div class="modal-head"><h3>รายละเอียดการกลับบ้าน</h3><button class="ghost" onclick="closeModal()">ปิด</button></div><div class="student-head">'+photoForStudent(t.students||{})+'<div><div class="badge-big" style="font-size:20px">'+esc(t.students?.full_name||"นักเรียน")+'</div><div class="muted">เลขที่ '+esc(t.students?.student_number??"-")+' · '+esc(t.students?.level||"")+' / ห้อง '+esc(t.students?.room||"")+'</div></div></div>'+info+'<div class="section-title"><h3>📸 หลักฐานรูปภาพ</h3><span class="muted">แตะภาพเพื่อขยายเต็มจอ</span></div><div class="photo-grid">'+img(student,"รูปนักเรียน")+img(sender,"รูปคนมาส่ง / หลักฐานตอนออก")+img(ret,"รูปตอนกลับเข้าหอ")+img(returnEvidence,"รูปหลักฐานตอนกลับ")+'</div></div></div>');
+}
+function openImage(src,title){
+ $("app").insertAdjacentHTML("beforeend",'<div class="modal open" onclick="this.remove()"><div class="modal-box center" onclick="event.stopPropagation()"><div class="modal-head"><h3>'+esc(title)+'</h3><button class="ghost" onclick="this.closest(\'.modal\').remove()">ปิด</button></div><img src="'+esc(src)+'" alt="'+esc(title)+'" style="width:100%;max-height:78vh;object-fit:contain;border-radius:16px;margin-top:10px"></div></div>');
+}
+
 function renderStaffLeaves(){
  const rows=state.cache.leaves;
  $("content").innerHTML='<div class="section-title"><h3>📝 ตรวจสอบพัก / ลา</h3><button class="ghost" onclick="queryAll().then(render)">รีเฟรช</button></div><div class="table-wrap"><table class="table"><thead><tr><th>นักเรียน</th><th>ประเภท</th><th>ช่วงเวลา</th><th>เหตุผล</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+ (rows.length?rows.map(x=>'<tr><td><b>'+esc(x.students?.full_name||"-")+'</b><div class="muted">'+esc(x.students?.student_code||"")+'</div></td><td>'+esc(x.leave_type)+'</td><td>'+fmtDT(x.start_at)+'<br>'+fmtDT(x.expected_return_at)+'</td><td>'+esc(x.reason||"-")+'</td><td>'+statusPill(x.status)+'</td><td>'+ (x.status==="รอตรวจสอบ"?'<button class="btn ok" onclick="reviewLeave(\''+x.id+'\',\'อนุมัติ\')">อนุมัติ</button> <button class="btn bad" onclick="reviewLeave(\''+x.id+'\',\'ไม่อนุมัติ\')">ไม่อนุมัติ</button>':'<button class="ghost" onclick="reviewLeave(\''+x.id+'\',\'ดู\')">ดูรายละเอียด</button>')+'</td></tr>').join(""):'<tr><td colspan="6" class="center">ยังไม่มีคำขอ</td></tr>')+'</tbody></table></div>';
