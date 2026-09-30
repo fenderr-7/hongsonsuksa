@@ -98,7 +98,7 @@ function nav(){
  ]:state.role==="ผู้ปกครอง"?[
    ["home","🏠","หน้าแรก"],["status","📍","สถานะ"],["history","🕘","ประวัติ"]
  ]:[
-   ["home","🏠","หน้าหลัก"],["trips","🏡","กลับบ้าน"],["leaves","📝","พัก/ลา"],["students","👥","นักเรียน"]
+   ["home","🏠","หน้าหลัก"],["trips","🏡","กลับบ้าน"],["leaves","📝","พัก/ลา"],["students","👥","จัดการนักเรียน"]
  ];
  return '<div class="nav"><div class="nav-in">'+items.map(x=>'<button class="'+(state.page===x[0]?"active":"")+'" onclick="route(\''+x[0]+'\')"><div style="font-size:18px">'+x[1]+'</div>'+x[2]+'</button>').join("")+'</div></div>'
 }
@@ -157,6 +157,7 @@ function goHome(){state.page="home";render()}
 function exitRole(){closeModal();state.role=null;state.student=null;state.page="home";renderRole()}
 async function render(){
  try{
+  if((state.role==="ครู"||state.role==="ผู้บริหาร")&&!state.staffUnlocked){renderPinGate(state.role);return;}
   if(!state.cache.students.length) await queryAll();
   let title=state.role==="นักเรียน"?"Homecoming · นักเรียน":state.role==="ผู้ปกครอง"?"Homecoming · ผู้ปกครอง":"Homecoming · "+state.role;
   $("app").innerHTML=shell(title,"โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ");
@@ -346,7 +347,7 @@ async function renderStaff(){
 function renderStaffHome(){
  const st=state.cache.students, tr=state.cache.trips, lr=state.cache.leaves;
  const todayTrips=tr.filter(x=>x.home_date===today()); const out=todayTrips.filter(x=>!x.return_at).length, returned=todayTrips.filter(x=>x.return_at).length, pending=lr.filter(x=>x.status==="รอตรวจสอบ").length;
- $("content").innerHTML='<div class="hero"><div class="hero-row"><div><p style="color:#bae6fd">'+esc(state.role)+'</p><h2>ภาพรวมวันนี้</h2><p>'+fmtDate(new Date())+' · ติดตามการกลับบ้านและการพัก/ลาแบบรวมศูนย์</p></div><div class="pill p-blue">'+st.length+' คน</div></div></div><div class="section-title"><h3>สรุปสถานะ</h3></div><div class="grid cards"><div class="card stat"><div class="ico">👥</div><div><b>'+st.length+'</b><small>นักเรียนที่ใช้งาน</small></div></div><div class="card stat"><div class="ico">🏡</div><div><b>'+todayTrips.length+'</b><small>กลับบ้านวันนี้</small></div></div><div class="card stat"><div class="ico">✅</div><div><b>'+returned+'</b><small>กลับเข้าหอแล้ว</small></div></div><div class="card stat"><div class="ico">⚠️</div><div><b>'+out+'</b><small>ยังไม่กลับ / รอตรวจ '+pending+'</small></div></div></div><div class="section-title"><h3>เมนูด่วน</h3></div><div class="grid quick"><button onclick="route(\'trips\')">🏡<b>รายการกลับบ้าน</b><span class="muted">ดูและบันทึกการกลับ</span></button><button onclick="route(\'leaves\')">📝<b>ตรวจพัก / ลา</b><span class="muted">'+pending+' รายการรอตรวจ</span></button><button onclick="route(\'students\')">👥<b>จัดการนักเรียน</b><span class="muted">ค้นหาและดูข้อมูล</span></button><button onclick="exportCSV()">⬇️<b>ส่งออกรายงาน</b><span class="muted">CSV เปิดใน Excel ได้</span></button></div><div class="section-title"><h3>แจ้งเตือนล่าสุด</h3></div>'+renderAlerts(tr,lr);
+ $("content").innerHTML='<div class="hero"><div class="hero-row"><div><p style="color:#bae6fd">'+esc(state.role)+'</p><h2>ภาพรวมวันนี้</h2><p>'+fmtDate(new Date())+' · ติดตามการกลับบ้านและการพัก/ลาแบบรวมศูนย์</p></div><div class="pill p-blue">'+st.length+' คน</div></div></div><div class="section-title"><h3>สรุปสถานะ</h3></div><div class="grid cards"><div class="card stat"><div class="ico">👥</div><div><b>'+st.length+'</b><small>นักเรียนที่ใช้งาน</small></div></div><div class="card stat"><div class="ico">🏡</div><div><b>'+todayTrips.length+'</b><small>กลับบ้านวันนี้</small></div></div><div class="card stat"><div class="ico">✅</div><div><b>'+returned+'</b><small>กลับเข้าหอแล้ว</small></div></div><div class="card stat"><div class="ico">⚠️</div><div><b>'+out+'</b><small>ยังไม่กลับ / รอตรวจ '+pending+'</small></div></div></div><div class="section-title"><h3>เมนูด่วน</h3></div><div class="grid quick"><button onclick="route(\'trips\')">🏡<b>รายการกลับบ้าน</b><span class="muted">ดูและบันทึกการกลับ</span></button><button onclick="route(\'leaves\')">📝<b>ตรวจพัก / ลา</b><span class="muted">'+pending+' รายการรอตรวจ</span></button><button onclick="openStudentManager()">👥<b>จัดการนักเรียน</b><span class="muted">ค้นหาและดูข้อมูล</span></button><button onclick="exportCSV()">⬇️<b>ส่งออกรายงาน</b><span class="muted">CSV เปิดใน Excel ได้</span></button></div><div class="section-title"><h3>แจ้งเตือนล่าสุด</h3></div>'+renderAlerts(tr,lr);
 }
 function renderAlerts(tr,lr){
  const arr=[...lr.filter(x=>x.status==="รอตรวจสอบ").slice(0,5).map(x=>({type:"leave",x})),...tr.filter(x=>x.home_date===today()&&!x.return_at).slice(0,5).map(x=>({type:"trip",x}))].slice(0,8);
@@ -457,6 +458,15 @@ function reviewLeave(id,action){
   if(error)return toast("อัปเดตไม่สำเร็จ: "+error.message,false); Object.assign(x,data); toast("อัปเดตคำขอแล้ว"); render();
  });
 }
+async function openStudentManager(){
+ try{
+  stopTripAutoRefresh();
+  state.page="students";
+  if(!$("content")){state.page="students";return render();}
+  if(!state.cache.students.length)await queryAll();
+  renderStudents();
+ }catch(e){toast("เปิดหน้าจัดการนักเรียนไม่สำเร็จ: "+e.message,false)}
+}
 function renderStudents(){
  const st=state.cache.students;
  const levels=[...new Set(st.map(x=>x.level).filter(Boolean))];
@@ -482,7 +492,11 @@ function exportCSV(){
  const csv="\\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\\n");
  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="homecoming-report-"+today()+".csv";a.click();URL.revokeObjectURL(a.href);toast("ส่งออกรายงานแล้ว");
 }
-function route(p){if(p!=="trips")stopTripAutoRefresh();state.page=p;render()}
+function route(p){
+ if(p==="students"){openStudentManager();return;}
+ if(p!=="trips")stopTripAutoRefresh();
+ state.page=p;render();
+}
 window.addEventListener("error",e=>console.error(e));
 start();
 
