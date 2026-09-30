@@ -72,7 +72,9 @@
 const SUPABASE_URL = "https://fgpuhmqcpmtugyczulop.supabase.co";
 const SUPABASE_KEY = "sb_publishable_4gpKvuaXsD82NpG4j6cv8A_MQlkS31U";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const state = { role:null, student:null, page:"home", tripDate:today(), tripRows:[], cache:{students:[],trips:[],leaves:[]} };
+const state = { role:null, student:null, page:"home", tripDate:today(), tripRows:[], tripRowsDate:null, lastTripRefresh:null, tripStatus:"all", staffUnlocked:false, cache:{students:[],trips:[],leaves:[]} };
+let deferredInstallPrompt = null;
+let tripAutoRefreshTimer = null;
 
 const $ = id => document.getElementById(id);
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
